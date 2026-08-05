@@ -1,0 +1,12 @@
+# 観測データは巨大なのでリポジトリには入れない（scripts/fetch_data.py で再取得）
+data/
+
+# スクリプトが書き出す図。ただし figures/reference/ は
+# 「正しく動いたときの見本」としてリポジトリに入れる
+figures/*
+!figures/reference/
+
+*.pyc
+__pycache__/
+.ipynb_checkpoints/
+.claude/settings.local.json
