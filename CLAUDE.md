@@ -10,6 +10,8 @@
 と同じ解析を受講者が自分で実行できるようになること。
 
 論文本体: `papers/Warren_2012_*.pdf`
+**PDF はリポジトリに入っていない**（再配布の許諾が無いため）。
+`bash papers/fetch_papers.sh` で arXiv 版が手元に揃う。詳細は `papers/README.md`。
 
 ## セッションをまたぐための記録ルール（重要）
 
@@ -130,7 +132,7 @@ Colab 専用セル（`!pip` などを含むもの）は自動で飛ばし、番�
      整合しない**という形まで絞れた。著者に問い合わせる価値がある。
    - Fe XIII が DEM から 1.3-2.8 倍ずれるのは **論文側でも同じ**
      （Warren+2011 で R=1.87/1.90）。原子データの既知の問題。
-   - 参照論文は `papers/refs/`（arXiv 版）。
+   - 参照論文は `papers/refs/`（arXiv 版。`papers/fetch_papers.sh` で取得）。
 4. **欠損値はサンプル単位でマスクすること（IDL / Python の両方）**。
    論文 §3 も "In computing these averaged profiles, missing data are not
    included" とわざわざ書いている。

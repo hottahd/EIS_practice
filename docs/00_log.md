@@ -2253,3 +2253,57 @@ CLAUDE.md と `.claude/settings.json` にあった `/home/sc/c0234hotta/miniforg
 - **図の凡例に日本語を使わない**（Colab で豆腐になる）。
   実行比較の dict のキーを凡例に流用していて踏んだので、
   「日本語の説明」と「英語の凡例」を分けて持つ形にした。
+
+---
+
+## 2026-08-07 — public 化の準備: 論文 PDF を履歴ごと除去した
+
+**背景**: 「public にすると papers があるからまずいのでは」（ユーザー）。→ その通りだった。
+
+### 判定: PDF 4 本はいずれも再配布できない
+
+| ファイル | ライセンス |
+|---|---|
+| `Warren_2012_*.pdf`（ApJ 759, 141） | © 2012 AAS / IOP。**AAS の CC-BY 化は 2022 年から**なので対象外 |
+| `refs/arxiv_1009.5976.pdf` | arXiv **nonexclusive-distrib 1.0**（arXiv が配布してよい、の意。第三者の再配布は不可） |
+| `refs/arxiv_1106.5057.pdf` | 同上 |
+| `refs/arxiv_1107.4480.pdf` | 同上 |
+
+3 本とも arXiv の abs ページで実際にライセンス表記を確認した（CC-BY ではない）。
+
+**★ `git rm` では不十分。** PDF は最初期のコミット（旧 `97ca941`, `adf5a1e`）から
+入っており、public にすれば履歴から誰でも取り出せる。**履歴の書き換えが必要**だった。
+
+なお作業時点で `https://api.github.com/repos/hottahd/EIS_practice` は 404 = **private のまま**。
+公開前に対処できた。
+
+### やったこと
+
+1. **バックアップ**: `git bundle create ... --all` と PDF のコピーを取得（scratchpad）。
+2. **棚卸し**: 履歴に一度でも入った全パスを確認 → **問題は PDF 4 本だけ**。
+   `figures/reference/*.png` などは自前の出力、`work/*.txt` は自前の計算結果。
+   秘密情報（鍵・トークン）の混入は無し。
+3. **`git filter-repo` で 4 本を全履歴から除去**（単体スクリプトを取得して実行）。
+   - **全コミット hash が変わった**。この文書の上の方で引用している
+     `4c55544` / `7bc2716` などの旧 hash はもう存在しない。
+   - `.git` 17 MB → **7.5 MB**。
+   - filter-repo は origin を自動で外すので、`git remote add origin ...` で復旧した。
+4. **ローカルの PDF は復元**し、`.gitignore` に `papers/*.pdf` と `papers/**/*.pdf` を追加。
+5. **`papers/README.md`**（出典・DOI・arXiv・使いどころ、再配布しない理由）と
+   **`papers/fetch_papers.sh`**（arXiv 版を各自の手元に落とす）を追加。
+   fetch スクリプトは空ディレクトリで実際に走らせて 4 本とも取得できることを確認済み。
+   - Warren+2012 の arXiv 版は **1204.3220**（arXiv API で確認。DOI 10.1088/0004-637X/759/2/141）
+   - 参照論文の書誌も arXiv API で確認:
+     Warren+2011 ApJ 734, 90 / Winebarger+2011 ApJ 740, 2 / Tripathi+2011 ApJ 740, 111
+
+### 残っている判断（ユーザー）
+
+- **force push は未実行**。`git push --force origin main` を手で叩く必要がある
+  （`.claude/settings.json` の deny にも入れてある）。
+- 数値表の転記（`docs/01_paper_analysis.md` の Table 2、ノートの `PAPER_R`）は
+  **事実・データの出典明記つき引用**として残す判断。教材の核でもある。
+- public 化前に検討してもよい軽微な点:
+  - マシン固有の絶対パスとアカウント ID が 6 ファイルに入っている
+    （`.claude/settings.json`, `CLAUDE.md`, `docs/00_log.md`, `docs/03_environment.md`,
+      `scripts/idl/10_poa_check.pro`, `scripts/idl/13_mcmc_dem.pro`）
+  - リポジトリ自体の LICENSE ファイルが無い（教材を配るなら明示した方がよい）

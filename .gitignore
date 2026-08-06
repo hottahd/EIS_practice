@@ -33,5 +33,12 @@ work/*
 !work/box_scan.csv
 !work/perline_scan.csv
 
+# ★ 論文 PDF はリポジトリに入れない（再配布の許諾が無い）。
+#   出版社版 (c) AAS/IOP、arXiv 版は nonexclusive-distrib 1.0 で
+#   「arXiv が配布してよい」という許諾でしかない。
+#   入手方法は papers/README.md と papers/fetch_papers.sh を参照。
+papers/*.pdf
+papers/**/*.pdf
+
 # pdftotext の出力（PDF から再生成できる）
 papers/refs/*.txt
