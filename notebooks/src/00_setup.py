@@ -10,7 +10,7 @@
 # 3. 動作確認
 #
 # **題材**: 2011 年 7 月 2 日 03:07 UT、活動領域 NOAA 1243
-# （論文 Table 1 の region 7）。**論文に観測値の表が載っている唯一の天体**なので、
+# （論文 Table 1 の region 7）。**論文に観測値の表が載っている唯一の活動領域**なので、
 # 自分の解析結果を 1 行ずつ答え合わせできる。
 
 # %% [markdown]
@@ -19,20 +19,49 @@
 # | パッケージ | 用途 |
 # |---|---|
 # | `eispac` | EIS の level-1 HDF5 を読む、輝線フィット |
-# | `sunpy` / `aiapy` | AIA/HMI の画像を扱う |
+# | `sunpy` | AIA の画像を扱う |
 # | `fiasco` | CHIANTI の原子データから寄与関数 G(T) を作る |
 # | `demregpy` | 正則化インバージョンで DEM を解く |
+#
+# `aiapy` は**入れない**。この教材が使う AIA は JSOC の synoptic 版で、
+# 既に level-1.5 なので `aiapy` の前処理が要らないため
+# （`aiapy` は numpy≥2.1 を要求し、Colab に元から入っている `numba` と衝突する）。
+# フルディスクの level-1 を自分で処理したい人だけ `pip install aiapy` すればよい。
 
 # %%
-!pip install -q eispac aiapy fiasco demregpy
+!pip install -q eispac fiasco demregpy
+
+# %% [markdown]
+# ### ★ 赤い `ERROR:` が出ても、たいていは無視してよい
+#
+# Colab では、上のインストールで次のような行が出ることがある:
+#
+# ```
+# ERROR: pip's dependency resolver does not currently take into account all the
+# packages that are installed. ...
+# google-colab 1.0.0 requires requests==2.32.4, but you have requests 2.34.2
+# ```
+#
+# これは**インストールの失敗ではない**。pip が
+# 「Colab に元から入っている別のパッケージが要求するバージョンと食い違っている」
+# と報告しているだけで、教材で使うパッケージ自体は正しく入っている。
+#
+# - `requests` は `sunpy` が 2.33 以上を要求するため上がる。
+#   Colab 自身の機能（Drive 連携など）が使うものだが、この教材では問題にならない。
+# - `numpy` / `numba` の衝突が出る場合は `aiapy` が原因なので、**入れていない**（上記）。
+#
+# **次のセルでバージョンが表示されれば問題なし。**
+# もし後のセルで `numpy` 関連のエラーが出たら、
+# **「ランタイム」→「セッションの再起動」** をして、**先頭から実行し直す**こと
+# （再起動してもダウンロード済みのファイルは残るので、待ち時間はほとんど無い）。
 
 # %%
-import eispac, sunpy, aiapy, fiasco, demregpy
+import eispac, sunpy, fiasco, demregpy
 import numpy as np, matplotlib.pyplot as plt
 print("eispac  ", eispac.__version__)
 print("sunpy   ", sunpy.__version__)
-print("aiapy   ", aiapy.__version__)
 print("fiasco  ", fiasco.__version__)
+print("demregpy", demregpy.__version__ if hasattr(demregpy, "__version__") else "(ok)")
 print("numpy   ", np.__version__)
 
 # %% [markdown]

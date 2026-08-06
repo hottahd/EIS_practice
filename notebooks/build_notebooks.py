@@ -93,7 +93,7 @@ PREAMBLE_MD = """## 準備（この 1 冊で 1 回だけ）
 **観測データは、必要になったところで各モジュールが自分で取得する**
 （既にあれば何もしないので、上から流し直しても無駄が無い）。"""
 
-PREAMBLE_PIP = "!pip install -q eispac aiapy fiasco demregpy"
+PREAMBLE_PIP = "!pip install -q eispac fiasco demregpy"
 
 PREAMBLE_BOOT = '''import os
 import subprocess

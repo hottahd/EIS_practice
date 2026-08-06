@@ -4,7 +4,7 @@
 これを 1 回走らせれば `data/` が再構成され、他のスクリプトがそのまま動く。
 
     python scripts/fetch_data.py            # 既定 = region 7 (2011-07-02)
-    python scripts/fetch_data.py --region 8 # 別の天体
+    python scripts/fetch_data.py --region 8 # 別の活動領域
 
 必要なもの: eispac, sunpy, aiapy（`docs/03_environment.md` 参照）
 所要: EIS 94 MB + SDO 46 MB、回線次第で数分
@@ -14,7 +14,7 @@ import sys
 import argparse
 import urllib.request
 
-# docs/01_paper_analysis.md の Table 1 より（論文が使った 15 天体）
+# docs/01_paper_analysis.md の Table 1 より（論文が使った 15 活動領域）
 # region 番号 -> (EIS ファイル名, ラスター中点時刻 UT)
 REGIONS = {
     1:  ("eis_20100619_014433", "2010-06-19T01:57:44"),
@@ -23,7 +23,7 @@ REGIONS = {
     4:  ("eis_20110725_090513", "2011-07-25T09:36:09"),
     5:  ("eis_20110131_102326", "2011-01-31T11:25:19"),
     6:  ("eis_20110121_133954", "2011-01-21T14:10:50"),
-    7:  ("eis_20110702_030712", "2011-07-02T03:38:08"),   # 論文 Table 2 の天体
+    7:  ("eis_20110702_030712", "2011-07-02T03:38:08"),   # 論文 Table 2 の活動領域
     8:  ("eis_20100723_143210", "2010-07-23T15:03:07"),
     9:  ("eis_20100929_223226", "2010-09-29T23:51:36"),
     10: ("eis_20110419_123027", "2011-04-19T13:32:20"),

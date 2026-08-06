@@ -60,7 +60,7 @@ EIS 94 MB の取得を冊数ぶん繰り返すことになる。半日/1 日コ�
 | 5 | **論文 Table 2 と答え合わせ**（山場） | ✅ |
 | 6 | 寄与関数 G(T) と EM loci。**1/(4π) の罠** | ✅ |
 | 7 | DEM インバージョン。ill-posed を SVD で見る、手法依存性 | ✅ |
-| 8–10 | Ca XVII ブレンド分離 / 較正 / 他天体 | 未着手 |
+| 8–10 | Ca XVII ブレンド分離 / 較正 / 他の活動領域 | 未着手 |
 
 受講者は **GitHub の URL を Colab に食わせるだけ**で開ける（要 public）:
 `https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/EIS_workshop.ipynb`
@@ -191,7 +191,7 @@ mamba activate eis
 pip install eispac demregpy aiapy fiasco
 
 # 2. データ取得（EIS 94 MB + SDO 46 MB、数分）
-python scripts/fetch_data.py            # 既定 = region 7 (論文 Table 2 の天体)
+python scripts/fetch_data.py            # 既定 = region 7 (論文 Table 2 の活動領域)
 
 # 3. 動作確認：ここまでが再現済みの到達点
 python scripts/quicklook_raster.py data/eis/eis_20110702_030712.data.h5 figures/q.png
@@ -313,7 +313,7 @@ https://eis.nrl.navy.mil/level1/hdf5/2011/07/02/eis_20110702_030712.data.h5
 https://eis.nrl.navy.mil/level1/hdf5/2011/07/02/eis_20110702_030712.head.h5
 ```
 
-→ **この 1 天体を「答え合わせのできる題材」として講習会の主教材にするのが自然。**
+→ **この活動領域を「答え合わせのできる題材」として講習会の主教材にするのが自然。**
 
 同様に region 8（2010-07-23 14:32:10, NOAA 1089 = Warren et al. 2011 と同じ AR）も
 `eis_20100723_143210.{data,head}.h5` が存在することを確認済み。

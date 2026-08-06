@@ -43,7 +43,7 @@
 | 項目 | 決定 |
 |---|---|
 | 解析環境 | **Python 中心**（eispac + sunpy + aiapy + demregpy）。IDL/SSW は使わない |
-| 到達目標 | **1 天体を通しで完走**。region 7 (2011-07-02, NOAA 1243) を EIS 較正 → 線フィット → AIA Fe XVIII → inter-moss 選択 → DEM まで。論文 Table 2 と数値照合する |
+| 到達目標 | **1 つの活動領域を通しで完走**。region 7 (2011-07-02, NOAA 1243) を EIS 較正 → 線フィット → AIA Fe XVIII → inter-moss 選択 → DEM まで。論文 Table 2 と数値照合する |
 | 規模（時間数） | **未定**。教材を先に作り、分量が見えてから決める → 教材はモジュール式にして時間に応じて組み替えられる構成にする |
 | 受講者 | **混在**。基礎パート（分光・DEM の物理から）と発展パートを分け、どの層も置いていかない構成 |
 
@@ -2189,7 +2189,7 @@ CLAUDE.md と `.claude/settings.json` にあった `/home/sc/c0234hotta/miniforg
 ### 次にやること
 
 - モジュール 8（Ca XVII ブレンド分離）のノート化。`scripts/ca17_template.py` があるので移植は容易。
-- モジュール 9（較正）、10（他天体・統計）のノート化。
+- モジュール 9（較正）、10（他の活動領域・統計）のノート化。
 - 講義スライド、事前課題、トラブルシューティング集。
 
 
@@ -2395,3 +2395,42 @@ public にすると「そこを見ろ」という案内を自分で公開する�
 
 → 実行して確認: **66 コードセル中 63 個を実行して完走（97 秒）。衝突なし。**
   各モジュールが自分の使う変数を使用前に定義し直しているため問題にならなかった。
+
+### Colab で pip の依存衝突が出た件（2026-08-07）
+
+受講者環境（Colab）で実際に出たもの:
+
+```
+ERROR: pip's dependency resolver ...
+google-colab 1.0.0 requires requests==2.32.4, but you have requests 2.34.2
+numba 0.60.0 requires numpy<2.1,>=1.22, but you have numpy 2.5.1
+```
+
+**インストールの失敗ではない**（pip は入れたうえで、他パッケージの要求との
+食い違いを報告しているだけ）。ただし放置すると当日に混乱するので対処した。
+
+**原因を特定**（各パッケージの requires を確認）:
+
+| パッケージ | numpy の要求 | その他 |
+|---|---|---|
+| **aiapy 0.12.1** | **numpy>=2.1.0** ← numba (numpy<2.1) と衝突する元 | |
+| sunpy 8.0.0 | numpy>=1.26 | **requests>=2.33.0** ← google-colab (==2.32.4) と衝突 |
+| eispac 0.99.4 | numpy>=1.18 | |
+| fiasco 0.8.2 | numpy>=1.25 | |
+| demregpy 1.0.0 | numpy>=2.0.0 | |
+
+**★ aiapy はノートブックで一度も使っていなかった**（バージョン表示だけ）。
+この教材が使う AIA は JSOC synoptic 版で**既に level-1.5** なので、
+`register` / `update_pointing` が要らないため。
+
+→ **インストールから aiapy を外した**（`!pip install -q eispac fiasco demregpy`）。
+  これで numpy が Colab の既定のまま据え置かれ、numba との衝突は出なくなるはず。
+  requests の方は sunpy が要求するので残るが無害。
+
+あわせて、**pip の赤い ERROR について説明する markdown をインストールの直後に追加**した
+（「失敗ではない」「次のセルでバージョンが出れば OK」
+「numpy 関連のエラーが出たらランタイムを再起動して先頭から。
+ダウンロード済みのファイルは残るので待ち時間はほとんど無い」）。
+
+※ `scripts/` 側（`make_fe18_map.py` など、フルディスク level-1 を処理する経路）は
+  引き続き aiapy が要る。必要な人だけ `pip install aiapy`。
