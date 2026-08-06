@@ -15,21 +15,26 @@ Python のみ（IDL / SolarSoft 不要）。**Google Colab で完結**します�
 
 ## はじめ方
 
-Colab のリンクを踏むだけです（インストール不要）:
+**Colab のリンクを踏むだけです**（インストール不要、Google アカウントだけあれば OK）:
 
-| # | ノート | 内容 | |
-|---|---|---|---|
-| 0 | 環境構築とデータ取得 | pip とデータ取得（登録不要） | [Colab](https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/00_setup.ipynb) |
-| 1 | EIS のデータを見る | 輝線ごとに別物に見える | [Colab](https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/01_raster.ipynb) |
-| 2 | スペクトル線フィット | 強度はフィットの産物 | [Colab](https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/02_fitting.ipynb) |
-| 3 | AIA 94 → Fe XVIII | 論文 Appendix の誤植を自分で確かめる | [Colab](https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/03_aia_fe18.ipynb) |
-| 4 | 座標合わせと箱の選択 | どこを測るかを決めるのが解析の本体 | [Colab](https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/04_coalign.ipynb) |
-| 5 | **論文 Table 2 と答え合わせ** | 講習会の山場 | [Colab](https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/05_table2.ipynb) |
-| 6 | 寄与関数と EM loci | 1/(4π) の罠 | [Colab](https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/06_gofnt_emloci.ipynb) |
-| 7 | DEM インバージョン | ill-posed と手法依存性 | [Colab](https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/07_dem.ipynb) |
+### → [Colab で開く](https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/EIS_workshop.ipynb)
 
-- **半日コース**: 0 → 5 ／ **1 日コース**: 0 → 7
-- 各ノートは**単独で動きます**。途中から始めても、セッションが切れても大丈夫です。
+**モジュール 0〜7 が 1 冊に入っています。** 上から順に実行してください。
+
+| | 内容 | 目安 |
+|---|---|---|
+| 0 | 環境構築とデータ取得（登録不要） | 5 分 |
+| 1 | EIS のデータを見る | 40 分 |
+| 2 | スペクトル線フィット | 50 分 |
+| 3 | AIA 94 → Fe XVIII | 50 分 |
+| 4 | 座標合わせと箱の選択 | 40 分 |
+| 5 | **論文 Table 2 と答え合わせ**（山場） | 30 分 |
+| 6 | 寄与関数と EM loci | 40 分 |
+| 7 | DEM インバージョン | 60 分 |
+
+**半日なら 5 まで、1 日なら 7 まで。** 途中で止めるだけです。
+セッションが切れても、上から流し直せば復帰できます
+（既に取得したファイルは落とし直しません）。
 
 ローカルで動かす場合:
 

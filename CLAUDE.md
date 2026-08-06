@@ -40,40 +40,47 @@ Claude の会話は切れる前提で作業する。**作業内容は必ず `doc
 
 ## 講習会ノートブック（`notebooks/`）
 
-**`.ipynb` を手で書かない。** `notebooks/src/NN_*.py` に `# %%` 区切りの
-素の Python として書き、`python notebooks/build_notebooks.py` で `.ipynb` を生成する。
+**配るのは `notebooks/EIS_workshop.ipynb` の 1 冊だけ。** モジュール 0〜7 が全部入っている。
+Colab は**ノート 1 冊ごとに VM が変わる**ので、分冊にすると pip install と
+EIS 94 MB の取得を冊数ぶん繰り返すことになる。半日/1 日コースは
+「どこで止めるか」の違いでしかないので、ノートを分けない。
 
-| ノート | 内容 | 状態 |
+**`.ipynb` を手で書かない。** ソースは `notebooks/src/NN_*.py` に
+モジュールごとに `# %%` 区切りの素の Python で書き、
+`python notebooks/build_notebooks.py` で 1 冊に繋いで生成する
+（各モジュール先頭の install / bootstrap セルは先頭の 1 組にまとめられる）。
+
+| 章 | 内容 | 状態 |
 |---|---|---|
-| `00_setup` | 環境構築とデータ取得（すべて pip・登録不要） | ✅ |
-| `01_raster` | EIS のデータを見る。**欠損値の罠**もここで踏ませる | ✅ |
-| `02_fitting` | ガウシアンフィット。成分順の罠、平均→fit の順番、誤差の床 | ✅ |
-| `03_aia_fe18` | AIA 94 → Fe XVIII。**Eq.(A1) の誤植を実データで確かめる** | ✅ |
-| `04_coalign` | 座標合わせ、inter-moss 箱の選択 | ✅ |
-| `05_table2` | **論文 Table 2 と答え合わせ**（山場） | ✅ |
-| `06_gofnt_emloci` | 寄与関数 G(T) と EM loci。**1/(4π) の罠** | ✅ |
-| `07_dem` | DEM インバージョン。ill-posed を SVD で見る、手法依存性 | ✅ |
-| `08`–`10` | Ca XVII ブレンド分離 / 較正 / 他天体 | 未着手 |
-
-半日コース (0→5) と 1 日コース (0→7) が通しで成立する。
+| 0 | 環境構築とデータ取得（すべて pip・登録不要） | ✅ |
+| 1 | EIS のデータを見る。**欠損値の罠**もここで踏ませる | ✅ |
+| 2 | ガウシアンフィット。成分順の罠、平均→fit の順番、誤差の床 | ✅ |
+| 3 | AIA 94 → Fe XVIII。**Eq.(A1) の誤植を実データで確かめる** | ✅ |
+| 4 | 座標合わせ、inter-moss 箱の選択 | ✅ |
+| 5 | **論文 Table 2 と答え合わせ**（山場） | ✅ |
+| 6 | 寄与関数 G(T) と EM loci。**1/(4π) の罠** | ✅ |
+| 7 | DEM インバージョン。ill-posed を SVD で見る、手法依存性 | ✅ |
+| 8–10 | Ca XVII ブレンド分離 / 較正 / 他天体 | 未着手 |
 
 受講者は **GitHub の URL を Colab に食わせるだけ**で開ける（要 public）:
-`https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/01_raster.ipynb`
-→ 一覧と設計上の約束は `notebooks/README.md`。
+`https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/EIS_workshop.ipynb`
+→ 設計上の約束は `notebooks/README.md`。
 
-**★ Colab はノート 1 冊ごとに VM が変わる。** 各ノートは
-先頭のブートストラップセルで clone/cd し、必要なデータをその場で取得し、
+**★ Colab は VM が使い捨て。** ノートは先頭のブートストラップで clone/cd し、
+データは必要になったところで取得し（既にあれば何もしない）、
 モジュール間の受け渡しファイルが無ければ `scripts/workshop.py` が作り直す。
-**1 冊だけ開いても完結する**ように保つこと。
+**途中から始めても、セッションが切れても動く**ように保つこと。
 
 **編集したら必ず検証すること**（講習会当日に動かないのが最悪なので）:
 
 ```bash
-python notebooks/verify_notebooks.py        # コードセルを上から順に exec
-python notebooks/verify_notebooks.py 03 04  # 番号で絞る
+python notebooks/verify_notebooks.py        # 配布物 EIS_workshop.ipynb を通しで（約 100 秒）
+python notebooks/verify_notebooks.py 03 04  # 編集中のモジュールだけ (src/*.py)
 ```
 
 Colab 専用セル（`!pip` などを含むもの）は自動で飛ばし、番号を表示する。
+**★ 引数なしを必ず 1 回通すこと。** 全モジュールが 1 つの名前空間で動くので、
+変数名の衝突はこれでしか見つからない。
 
 **図のラベルは英語で書く。** Colab に日本語フォントが無いので
 日本語ラベルは豆腐（□）になる。**説明は日本語、図は英語**。

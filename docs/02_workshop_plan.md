@@ -491,11 +491,12 @@ Colab でも成立する。
 
 ## 用意すべき成果物
 
-- [x] **Colab ノートブック モジュール 0–7**（`notebooks/`、2026-08-06）
+- [x] **Colab ノートブック モジュール 0–7**（`notebooks/EIS_workshop.ipynb` の 1 冊、2026-08-07）
       - `notebooks/src/NN_*.py` に書いて `build_notebooks.py` で `.ipynb` を生成
       - `verify_notebooks.py` で全コードセルの実行を自動検証（実データで通ることを確認済み）
       - 半日コース (0→5)、1 日コース (0→7) が通しで成立
-      - 受講者は Colab の GitHub ローダーで開く（`notebooks/README.md` にリンク一覧）
+      - 受講者は Colab の GitHub ローダーで 1 冊を開く（分冊にすると VM が別々になり
+        pip install と 94 MB の取得を繰り返すため）
       - **1 冊ずつ独立して動く**: 各ノートが clone・データ取得・
         中間ファイルの再生成（`scripts/workshop.py`）を自分でやる
 - [ ] Colab ノートブック モジュール 8–10（発展）
