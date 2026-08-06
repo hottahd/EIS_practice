@@ -87,7 +87,7 @@ ov_rel = ov_rel * (192.9040d/ov_wvl)
 fe11_ratio = 0.21406d * (188.216d/192.813d)     ; energy 比
 
 openw,lun,outdir+'/idl_ca_intensities.csv',/get_lun
-printf,lun,'ion,wvl,I_idl,cen_fit,wid_fit,chi2red,note'
+printf,lun,'wvl,I_idl,cen_fit,wid_fit,chi2red,note'   ; ★ 先頭に ion 列は書いていない
 
 for k=0,nwin-1 do begin
 

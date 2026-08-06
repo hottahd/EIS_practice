@@ -1972,3 +1972,79 @@ Fe XIII 202.044/203.826 は EIS の代表的な密度診断ペアで、
 - ただし Colab ではセッションが切れると消えるので、
   **事前計算した G(T) を同梱するのが現実的**（`work/gofnt_chianti901.txt` は 12 KB）。
 
+
+---
+
+## 2026-08-06 (session 2) — demregpy と MCMC_DEM の比較（講習会モジュール 7）
+
+`scripts/dem_demregpy.py`、図は `figures/dem_compare.png`。
+**同じ観測強度・同じ寄与関数**で 2 手法を解いて比べた。
+
+### ★★★ 訂正: 以前報告した alpha = 3.30 は誤り。正しくは 2.30
+
+**PINTofALE の DEM は [cm^-5 / logK]。**
+論文 Eq.(3) の EM 分布 ξ(Te)dTe は、ξ が [cm^-5/K] なので
+
+    ξ = DEM_perlogK / (T ln10)
+    ξ dTe = DEM_perlogK/(T ln10) × (T ln10 dlogT) = **DEM_perlogK × dlogT**
+
+→ **T は掛からない。** 私は `DEM × T` を EM 分布として傾きを測っていたため、
+   alpha が +1、beta が −1 ずれていた。
+
+| | alpha (6.0-6.6) | beta (6.6-7.0) |
+|---|---:|---:|
+| **正しい（DEM × ΔlogT）** | **+2.30** | **+5.39** |
+| 誤って報告していた（DEM × T） | +3.30 | +4.39 |
+| 論文 Table 1 region 7 | 2.9 | 9.0 |
+
+- **EM ピークの logT 6.60 = 3.98 MK は変わらない**（単調な因子ではピークは動かない）。
+- 「alpha が論文とよく一致（3.30 vs 2.9）」という説明は**撤回**。
+  正しくは **alpha は論文より 0.6 低い（2.30 vs 2.9）**。
+- beta は 4.39 → 5.39 と論文の 9.0 にわずかに近づいた。
+
+### 2 手法の要求が逆
+
+| | MCMC_DEM (PINTofALE) | demregpy (正則化) |
+|---|---|---|
+| 温度ビン | **粗い方が良い**（0.1 dex, 17 ビン） | **細かい方が良い**（0.05 dex, 33 ビン） |
+| 理由 | 各ビンが独立パラメータ。劣決定だと解が跳ねる | 平滑化項が劣決定を吸収する。**ビン数 > 拘束数が必須** |
+
+demregpy に 17 ビン・23 拘束を渡すと GSVD が
+`ValueError: operands could not be broadcast together with shapes (17,17) (23,1)`
+で破綻する。**正則化は劣決定を前提にする手法**だという性格がそのまま出ている。
+
+### 結果
+
+| 設定 | chi2_red | EM ピーク | alpha | beta |
+|---|---:|---|---:|---:|
+| demregpy 既定 | 5.08 | 6.65 (4.5 MK) | 1.53 | 2.23 |
+| demregpy `gloci=1` | 5.09 | **6.60 (3.98 MK)** | 1.57 | 0.74 |
+| demregpy `reg_tweak=2` | 4.57 | **6.60** | 1.61 | 1.90 |
+| **demregpy（MCMC の解を dem_norm0 に）** | **2.22** | **6.60** | **2.13** | **4.31** |
+| **MCMC_DEM** | — | **6.60 (3.98 MK)** | **2.30** | **5.39** |
+| 論文 Table 1 region 7 | — | 「4 MK 付近」 | 2.9 | 9.0 |
+
+**読み取れること:**
+
+1. **EM ピークの 4 MK はどの手法・どの設定でも動かない。**
+   論文の主張の核（活動領域コアの EM は 4 MK に強くピークを持つ）は**手法に依らず頑健**。
+2. **傾き alpha は手法と正則化の設定で 1.53 - 2.30 と大きく動く。**
+   正則化は既定の重み付けだとピークを均して alpha を過小評価する。
+   **MCMC の解を初期の重み `dem_norm0` に与えると chi2 が 5.08 → 2.22 に改善し、
+   alpha も 2.13 と MCMC に近づく。** 答えが事前分布に強く依存する。
+3. **どの設定でも chi2 が 1 に届かない。**
+   22 本・誤差 22% のデータを滑らかな DEM で説明しきれない。
+
+→ 論文自身の但し書き
+  "It is also clear, however, that the detailed structure of the EM distributions
+   is much more difficult to determine with confidence"
+  を実データで再現した形。**これがモジュール 7 の核心。**
+
+### 途中で潰したバグ
+
+- `08_fit_ca.pro` が書く CSV の**ヘッダが 1 列ずれていた**（`ion` 列を書いて
+  いないのにヘッダに残っていた）。Python 側が波長を強度として読んでいた。
+  → IDL 側のヘッダを修正し、Python 側は**位置で読む**ようにした。
+- MCMC と demregpy の **DEM の単位が違う**（per logK と per K）。
+  揃えないと 1e7 ずれる。
+

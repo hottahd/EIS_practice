@@ -103,7 +103,9 @@ for k=0,nline-1 do begin
 endfor
 
 ;; --- 書き出し（Python 側でも使えるプレーンテキスト）
-openw,lun,outdir+'/gofnt_chianti901.txt',/get_lun
+gname = getenv('GOFNT_OUT')
+if gname eq '' then gname = 'gofnt_chianti901.txt'
+openw,lun,outdir+'/'+gname,/get_lun
 printf,lun,'# G(T) for Warren+2012 lines. CHIANTI '+!xuvtop
 printf,lun,'# abund = sun_coronal_1992_feldman   ioneq = chianti.ioneq   logNe = '+ $
        string(logNe,format='(f4.1)')
@@ -119,7 +121,7 @@ printf,lun,'# G(T) : nline blocks of nT values'
 for k=0,nline-1 do printf,lun,gofT[*,k]
 free_lun,lun
 
-print,'>>> wrote '+outdir+'/gofnt_chianti901.txt'
+print,'>>> wrote '+outdir+'/'+gname
 print,'>>> DONE'
 exit
 end

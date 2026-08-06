@@ -1,7 +1,14 @@
 """MCMC_DEM の結果を論文 Figure 6-8 と同じ形式でプロットする。
 
 論文は DEM そのものではなく **EM 分布 xi(Te) dTe** を描いている（式 (3)）。
-ここでも DEM[cm^-5/logK] に T を掛けたもの（= xi dT に比例）を描く。
+
+★ 単位の注意（一度間違えたので明記）
+  PINTofALE の DEM は **[cm^-5 / logK]**。
+  xi(Te) は [cm^-5 / K] なので xi = DEM_perlogK / (T ln10)。
+  よって xi(Te) dTe = DEM_perlogK/(T ln10) * (T ln10 dlogT) = **DEM_perlogK * dlogT**。
+  → **T は掛からない。** 掛けると傾き alpha が +1、beta が -1 ずれる
+    （実際 alpha を 3.30 と誤報告した。正しくは 2.30）。
+  ピーク位置は単調な因子では動かないので logT 6.60 = 3.98 MK のまま。
 
     python scripts/plot_dem.py work/mcmc_dem_result.txt figures/dem_region7.png
 """
@@ -37,9 +44,10 @@ def main():
     logt = d[:, 0]
     best, med, q25, q75 = d[:, 1], d[:, 2], d[:, 3], d[:, 4]
 
-    # 論文の EM 分布 = DEM * T
+    # 論文の EM 分布 xi(Te)dTe = DEM[cm^-5/logK] * dlogT（T は掛けない）
     T = 10 ** logt
-    em, emlo, emhi, embest = med * T, q25 * T, q75 * T, best * T
+    dlt = float(np.median(np.diff(logt)))
+    em, emlo, emhi, embest = med * dlt, q25 * dlt, q75 * dlt, best * dlt
 
     fig, ax = plt.subplots(figsize=(7.2, 5.0))
     ax.fill_between(logt, emlo, emhi, color="0.75", label="MCMC 50% range")
@@ -54,7 +62,7 @@ def main():
     i = int(np.nanargmax(em))
     ax.set_yscale("log")
     ax.set_xlabel(r"$\log T$ [K]")
-    ax.set_ylabel(r"$\xi(T_e)\,dT_e \propto \mathrm{DEM}\times T$  [cm$^{-5}$]")
+    ax.set_ylabel(r"$\xi(T_e)\,dT_e = \mathrm{DEM}\times\Delta\log T$  [cm$^{-5}$]")
     ax.set_title(
         f"Warren+2012 region 7 (2011-07-02, NOAA 1243), inter-moss box\n"
         f"peak log T = {logt[i]:.2f} ({T[i]/1e6:.1f} MK),  "
