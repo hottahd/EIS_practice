@@ -191,8 +191,15 @@ Python (eispac) だけでは解決できず、SSW が要る項目。
      `drwxr--r--` で入れず、しかも 2004 年版。**使えない。**
      `/scr/a000/c0234hotta/PINTofALE`（2015 年版）を使うこと。
 
-5. CHIANTI IDL で寄与関数を出し、fiasco の結果と突き合わせる … 未実施
-   （CHIANTI 側は `scripts/idl/09_gofnt.pro` で出せている。fiasco との比較が残り）
+5. **CHIANTI IDL と fiasco の寄与関数を突き合わせる** … ✅ **完了**
+   `scripts/gofnt_fiasco.py`。fiasco の `ascii_dbase_root` を SSW 同梱の
+   CHIANTI 9.0.1 に向けて**同じ原子データファイル**を読ませた。
+   → **22 輝線すべてで median 1.000、最大でも 3.5% 差、形成温度は完全一致。**
+   → **講習会は Python (fiasco) だけで寄与関数を出せる。**
+   ※ 最大の差が Fe XIII の 2 本（+3.5%/-2.8%）に出るのが示唆的。
+     Fe XIII は DEM で R=1.3-2.8 と外れる唯一のイオンでもある。
+
+**→ ★リストは全項目完了。**
 
 ### 追加でできたこと（当初の★リストに無かったもの）
 

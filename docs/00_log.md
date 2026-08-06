@@ -1779,3 +1779,59 @@ SSW 無しで成立する。
   `0.41033*p[0]` のような式を使うテンプレートは
   **メモリ上で組み立てる**しかない（`EISFitTemplate(template=..., parinfo=...)`）。
 
+
+### ★★★ fiasco と CHIANTI IDL の寄与関数が一致した（★リスト項目 5、完了）
+
+`scripts/gofnt_fiasco.py`。fiasco 0.8.2 の `ascii_dbase_root` を
+**SSW 同梱の CHIANTI 9.0.1**（`/opt/ssw/packages/chianti/dbase`）に向けたので、
+両者が**文字通り同じ原子データファイル**を読む。したがってこの比較は
+「DB のバージョン差」ではなく **2 つの実装の差だけ**を見ている。
+
+設定は `~/.fiasco/fiascorc`:
+```
+[database]
+ascii_dbase_root = /opt/ssw/packages/chianti/dbase
+hdf5_dbase_root = /scr/a000/c0234hotta/fiasco/chianti_dbase.h5
+```
+
+| line | G_fiasco/G_IDL | | line | G_fiasco/G_IDL |
+|---|---:|---|---|---:|
+| Si VII 275.368 | 1.011 | | **Fe XIII 202.044** | **1.035** |
+| Fe IX 188.497 | 1.000 | | **Fe XIII 203.826** | **0.972** |
+| Fe IX 197.862 | 1.000 | | Fe XIV 264.787 | 0.984 |
+| Fe X 184.536 | 1.001 | | Fe XIV 270.519 | 1.001 |
+| Fe XI 180.401 | 1.010 | | Fe XV 284.160 | 1.001 |
+| Fe XI 188.216 | 1.008 | | S XIII 256.686 | 0.999 |
+| S X 264.233 | 0.986 | | Fe XVI 262.984 | 0.999 |
+| Si X 258.375 | 0.989 | | Ar XIV 194.396 | 1.002 |
+| Fe XII 192.394 | 0.994 | | Ca XIV 193.874 | 1.000 |
+| Fe XII 195.119 | 0.994 | | Ca XV 200.972 | 0.997 |
+| | | | Ca XVI 208.604 | 1.000 |
+| | | | Ca XVII 192.858 | 0.999 |
+
+**median 1.000、最大でも 3.5% 差、形成温度は 22 本すべて完全一致。**
+
+- 3% 程度の差はレベル占有数ソルバーの細部（陽子励起の有無、
+  two-ion model の扱い）による。fiasco は
+  "No autoionization or level-resolved radiative recombination data available"
+  "No proton data available" という警告を出すイオンがある。
+- ★ **最大の差が Fe XIII の 2 本（+3.5%, -2.8%）に出ている**のが示唆的。
+  Fe XIII は密度敏感線であり、DEM で R = 1.3-2.8 と大きく外れる
+  （論文でも 1.80/1.82）唯一のイオンでもある。
+  **原子データが最も不確かなイオンだ、という独立な傍証**になっている。
+
+→ **講習会は Python (fiasco) だけで寄与関数を出せる。SSW も CHIANTI IDL も要らない。**
+  ただし CHIANTI の ASCII DB（1.6 GB）は必要。Colab では
+  事前計算した G(T) をリポジトリに同梱するのが現実的
+  （`work/gofnt_chianti901.txt` は 12 KB）。
+
+### ★ ここまでで ★リストは全項目完了
+
+| # | 項目 | 結果 |
+|---|---|---|
+| 1 | `eis_auto_fit` と eispac の突き合わせ | ✅ 22 輝線すべて一致 |
+| 2 | 打ち上げ後の較正カーブ | ✅ 作成（NRL / Del Zanna）。原因ではなかった |
+| 3 | Ca XVII のブレンド分離 | ✅ SSW 0.767 / Python 0.750 |
+| 4 | PINTofALE MCMC_DEM | ✅ 論文 Table 2 の R 列を再現、EM ピーク 3.98 MK |
+| 5 | **fiasco と CHIANTI IDL の突き合わせ** | ✅ **median 1.000、最大 3.5% 差** |
+
