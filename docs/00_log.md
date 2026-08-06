@@ -2307,3 +2307,33 @@ CLAUDE.md と `.claude/settings.json` にあった `/home/sc/c0234hotta/miniforg
     （`.claude/settings.json`, `CLAUDE.md`, `docs/00_log.md`, `docs/03_environment.md`,
       `scripts/idl/10_poa_check.pro`, `scripts/idl/13_mcmc_dem.pro`）
   - リポジトリ自体の LICENSE ファイルが無い（教材を配るなら明示した方がよい）
+
+### 追記: Colab で「1 冊だけ開いても動く」ようにした
+
+> これ、用意してもらった ipynb を全部 Google Colab に置けばいいのかしら？（ユーザー）
+
+置き方は「public リポジトリに置いて Colab の GitHub ローダーで開く」で正しいが、
+**そのままでは動かないことが分かった**ので直した。
+
+**問題**: Colab は**ノートブック 1 冊ごとに新しい VM** が立ち上がる。
+GitHub から開いても**リポジトリは clone されない**（/content で始まる）。
+モジュール 1 以降は `scripts/` の import と `data/`・`work/` の相対パスに
+依存していたので、**モジュール 0 以外は全部動かなかったはず**。
+さらにモジュール 5・6・7 は前のノートが書いた中間ファイルを前提にしていた。
+
+**直した内容**:
+
+1. **ブートストラップのセル**をモジュール 1–7 の先頭に入れた。
+   リポジトリの外にいたら `git clone` して `cd`、`sys.path` に `scripts` を追加。
+   ローカルで実行しているときは何もしない（冪等）。
+2. **`scripts/workshop.py`** を新設。中間ファイルが無ければその場で作り直す:
+   - `box_intensities()` … 箱平均 → 22 輝線フィット（モジュール 2 と同じ処理、10 秒）
+   - `aia_on_eis_grid()` … AIA 取得 → EIS 格子へ再投影 → 相互相関（モジュール 4 と同じ、十数秒）
+   - `ensure_eis()` / `ensure_aia()` … データ取得
+3. モジュール 6・7 をこれに繋いだ（7 は `raise SystemExit` していたのをやめた）。
+
+**検証**: 中間ファイル 2 つを退避してからモジュール 6・7 を実行 →
+**自動で作り直して完走**し、退避版と**完全一致**（強度 CSV は diff なし、
+AIA Fe XVIII 箱平均 5.892 → 5.892、相互相関のずれも同じ）。
+
+4. **`notebooks/README.md`** を追加（Colab リンク一覧、設計上の約束、所要時間の目安）。

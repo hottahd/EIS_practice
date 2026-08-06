@@ -47,6 +47,15 @@ Claude の会話は切れる前提で作業する。**作業内容は必ず `doc
 
 半日コース (0→5) と 1 日コース (0→7) が通しで成立する。
 
+受講者は **GitHub の URL を Colab に食わせるだけ**で開ける（要 public）:
+`https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/01_raster.ipynb`
+→ 一覧と設計上の約束は `notebooks/README.md`。
+
+**★ Colab はノート 1 冊ごとに VM が変わる。** 各ノートは
+先頭のブートストラップセルで clone/cd し、必要なデータをその場で取得し、
+モジュール間の受け渡しファイルが無ければ `scripts/workshop.py` が作り直す。
+**1 冊だけ開いても完結する**ように保つこと。
+
 **編集したら必ず検証すること**（講習会当日に動かないのが最悪なので）:
 
 ```bash

@@ -16,6 +16,27 @@
 # %%
 !pip install -q demregpy
 
+# %% [markdown]
+# ### Colab のためのおまじない（ローカルで動かしている人は素通りします）
+#
+# **Colab はノートブック 1 冊ごとに新しい仮想マシンが立ち上がる。**
+# GitHub から開いただけでは教材リポジトリもデータも無いので、ここで用意する。
+# セッションが切れたときも、このセルをもう一度実行すれば復帰できる。
+
+# %%
+import os
+import subprocess
+import sys
+
+REPO = "https://github.com/hottahd/EIS_practice.git"
+if not os.path.exists("scripts/lines_warren2012.py"):      # リポジトリの外にいる
+    if not os.path.exists("EIS_practice"):
+        print("教材リポジトリを取得中 ...")
+        subprocess.run(["git", "clone", "-q", REPO], check=True)
+    os.chdir("EIS_practice")
+sys.path.insert(0, "scripts")
+print("作業ディレクトリ:", os.getcwd())
+
 # %%
 import csv
 import os
@@ -127,14 +148,15 @@ plt.show()
 #   それを使うと χ² が発散する（モジュール 2 参照）
 
 # %%
-if not os.path.exists("work/box_intensities.csv"):
-    raise SystemExit("先にモジュール 2 を実行して work/box_intensities.csv を作ること")
+# モジュール 2 の出力を読む。Colab はノート 1 冊ごとに VM が変わるので、
+# 無ければその場で作り直す（`scripts/workshop.py` にまとめてある。10 秒ほど）。
+from workshop import box_intensities
 
 iobs = np.zeros(len(names))
-for r in csv.DictReader(open("work/box_intensities.csv")):
-    k = int(np.argmin(np.abs(wvl - float(r["wvl"]))))
-    if abs(wvl[k] - float(r["wvl"])) < 0.01:
-        iobs[k] = float(r["I_fit"])
+for ion, w, i_fit, i_paper, ratio in box_intensities():
+    k = int(np.argmin(np.abs(wvl - w)))
+    if abs(wvl[k] - w) < 0.01:
+        iobs[k] = i_fit
 iobs[int(np.argmin(np.abs(wvl - 192.858)))] = 0.0        # Ca XVII を外す
 
 ok = iobs > 0
@@ -162,8 +184,11 @@ R = np.interp(logT, d[:, 0], d[:, 1])
 print(f"R(T) のピーク = {R.max():.3e} DN cm^5 s^-1 pix^-1 "
       f"at logT {logT[int(np.argmax(R))]:.2f}")
 
-npz = np.load("data/cache/aia_on_eis_grid.npz")          # モジュール 4 の出力
-aia = float(np.nanmean(npz["fe18"][244:274, 32:40]))
+# モジュール 4 の出力。無ければその場で作り直す（AIA 3 MB の取得込みで十数秒）
+from workshop import aia_on_eis_grid, BOX
+
+npz = aia_on_eis_grid()
+aia = float(np.nanmean(npz["fe18"][BOX["y0"]:BOX["y1"], BOX["x0"]:BOX["x1"]]))
 print(f"AIA Fe XVIII（同じ箱の平均） = {aia:.2f} DN/s  （論文 Table 2 = 7.20）")
 
 tresp = np.column_stack([tresp, R])

@@ -495,6 +495,9 @@ Colab でも成立する。
       - `notebooks/src/NN_*.py` に書いて `build_notebooks.py` で `.ipynb` を生成
       - `verify_notebooks.py` で全コードセルの実行を自動検証（実データで通ることを確認済み）
       - 半日コース (0→5)、1 日コース (0→7) が通しで成立
+      - 受講者は Colab の GitHub ローダーで開く（`notebooks/README.md` にリンク一覧）
+      - **1 冊ずつ独立して動く**: 各ノートが clone・データ取得・
+        中間ファイルの再生成（`scripts/workshop.py`）を自分でやる
 - [ ] Colab ノートブック モジュール 8–10（発展）
 - [ ] 中間ファイル（詰まった人が途中から再開できるように）
       - 箱平均スペクトル、EIS 強度マップ、AIA on EIS grid、寄与関数

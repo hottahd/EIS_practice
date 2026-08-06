@@ -22,6 +22,27 @@
 # %%
 !pip install -q eispac
 
+# %% [markdown]
+# ### Colab のためのおまじない（ローカルで動かしている人は素通りします）
+#
+# **Colab はノートブック 1 冊ごとに新しい仮想マシンが立ち上がる。**
+# GitHub から開いただけでは教材リポジトリもデータも無いので、ここで用意する。
+# セッションが切れたときも、このセルをもう一度実行すれば復帰できる。
+
+# %%
+import os
+import subprocess
+import sys
+
+REPO = "https://github.com/hottahd/EIS_practice.git"
+if not os.path.exists("scripts/lines_warren2012.py"):      # リポジトリの外にいる
+    if not os.path.exists("EIS_practice"):
+        print("教材リポジトリを取得中 ...")
+        subprocess.run(["git", "clone", "-q", REPO], check=True)
+    os.chdir("EIS_practice")
+sys.path.insert(0, "scripts")
+print("作業ディレクトリ:", os.getcwd())
+
 # %%
 import os
 import urllib.request

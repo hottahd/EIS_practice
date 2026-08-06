@@ -21,6 +21,27 @@
 # %%
 !pip install -q eispac
 
+# %% [markdown]
+# ### Colab のためのおまじない（ローカルで動かしている人は素通りします）
+#
+# **Colab はノートブック 1 冊ごとに新しい仮想マシンが立ち上がる。**
+# GitHub から開いただけでは教材リポジトリもデータも無いので、ここで用意する。
+# セッションが切れたときも、このセルをもう一度実行すれば復帰できる。
+
+# %%
+import os
+import subprocess
+import sys
+
+REPO = "https://github.com/hottahd/EIS_practice.git"
+if not os.path.exists("scripts/lines_warren2012.py"):      # リポジトリの外にいる
+    if not os.path.exists("EIS_practice"):
+        print("教材リポジトリを取得中 ...")
+        subprocess.run(["git", "clone", "-q", REPO], check=True)
+    os.chdir("EIS_practice")
+sys.path.insert(0, "scripts")
+print("作業ディレクトリ:", os.getcwd())
+
 # %%
 import os
 import urllib.request
@@ -254,31 +275,16 @@ import csv
 import sys
 sys.path.insert(0, "scripts")
 
-if not os.path.exists("work/box_intensities.csv"):
-    print("work/box_intensities.csv が無いので 22 輝線をフィットする（約 5 秒）")
-    import eispac
-    from lines_warren2012 import LINES, pick_component
-    from fit_box_spectra import average_spectrum
-    BOX = dict(y0=244, y1=274, x0=32, x1=40)
-    rows = []
-    for ion, w, tname, ip, sp in LINES:
-        ww, I, s, _ = average_spectrum("data/eis/eis_20110702_030712.data.h5", w, **BOX)
-        t = eispac.read_template(eispac.data.get_fit_template_filepath(tname))
-        comp, _ = pick_component(t, w)
-        f = eispac.fit_spectra(I, t, wave=ww, errs=s, ncpu=1, ignore_warnings=True)
-        rows.append((ion, w, float(np.atleast_1d(f.fit["int"][..., comp]).ravel()[0]), ip,
-                     float(np.atleast_1d(f.fit["int"][..., comp]).ravel()[0]) / ip))
-    os.makedirs("work", exist_ok=True)
-    with open("work/box_intensities.csv", "w", newline="") as fh:
-        w_ = csv.writer(fh)
-        w_.writerow(["ion", "wvl", "I_fit", "I_paper", "ratio"])
-        w_.writerows(rows)
+# モジュール 2 の出力。無ければその場で作る（scripts/workshop.py、10 秒ほど）
+from workshop import box_intensities
+
+rows = box_intensities()
 
 iobs = np.zeros(len(names))
-for r in csv.DictReader(open("work/box_intensities.csv")):
-    k = int(np.argmin(np.abs(wvl - float(r["wvl"]))))
-    if abs(wvl[k] - float(r["wvl"])) < 0.01:
-        iobs[k] = float(r["I_fit"])
+for ion, w, i_fit, i_paper, ratio in rows:
+    k = int(np.argmin(np.abs(wvl - w)))
+    if abs(wvl[k] - w) < 0.01:
+        iobs[k] = i_fit
 
 # ★ Ca XVII 192.858 はブレンドしたままの値（論文の 5 倍）なので EM loci から外す。
 #   モジュール 8 で分離したら戻す。
@@ -288,10 +294,10 @@ print(f"EM loci に使う輝線: {int((iobs > 0).sum())} 本")
 # %%
 logTf, namesf, wvlf, Gf = read_gofnt(GOFNT_FINE)      # 細かい格子の方が見やすい
 iobsf = np.zeros(len(namesf))
-for r in csv.DictReader(open("work/box_intensities.csv")):
-    k = int(np.argmin(np.abs(wvlf - float(r["wvl"]))))
-    if abs(wvlf[k] - float(r["wvl"])) < 0.01:
-        iobsf[k] = float(r["I_fit"])
+for ion, w, i_fit, i_paper, ratio in rows:
+    k = int(np.argmin(np.abs(wvlf - w)))
+    if abs(wvlf[k] - w) < 0.01:
+        iobsf[k] = i_fit
 iobsf[np.argmin(np.abs(wvlf - 192.858))] = 0.0
 
 fig, ax = plt.subplots(figsize=(8.5, 5.8))
