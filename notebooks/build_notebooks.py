@@ -86,6 +86,7 @@ def notebook(cells):
 # 各モジュールの先頭にある「インストール」「ブートストラップ」のセルは
 # **先頭に 1 組だけ**置き、2 回目以降は落とす。判定は下の関数による。
 BOOTSTRAP_MD = "### Colab のためのおまじない"
+RESTART_MD_HEAD = "### インストール直後のランタイム再起動"
 
 PREAMBLE_MD = """## 準備（この 1 冊で 1 回だけ）
 
@@ -94,6 +95,48 @@ PREAMBLE_MD = """## 準備（この 1 冊で 1 回だけ）
 （既にあれば何もしないので、上から流し直しても無駄が無い）。"""
 
 PREAMBLE_PIP = "!pip install -q eispac fiasco demregpy"
+
+PREAMBLE_RESTART_MD = """### インストール直後のランタイム再起動について
+#
+Colab では、pip が `numpy` などを入れ替えると、**実行中のセッションが
+古いモジュールを掴んだまま**になり、あとで次のようなエラーが出ることがある:
+#
+```
+ImportError: cannot import name '_center' from 'numpy._core.umath'
+```
+#
+これはインストールの失敗ではなく、**再起動すれば直る**。
+次のセルが入れ替えを検出して、必要なときだけ自動で再起動する。
+#
+**再起動が起きたら、もう一度このノートを先頭から実行すること。**
+2 回目はインストールもダウンロードも済んでいるので一瞬で終わる。"""
+
+PREAMBLE_RESTART = '''import sys
+from importlib.metadata import version
+
+need_restart = False
+try:
+    loaded = sys.modules["numpy"].__version__ if "numpy" in sys.modules else None
+    if loaded is not None and loaded != version("numpy"):
+        need_restart = True
+        print(f"numpy が {loaded} -> {version('numpy')} に入れ替わりました")
+except Exception as e:                      # 判定自体が失敗したら念のため再起動
+    need_restart = True
+    print("numpy の状態を確認できませんでした:", e)
+
+if need_restart:
+    print("ランタイムを再起動します。"
+          "再起動したら、もう一度このノートを先頭から実行してください。")
+    try:
+        import IPython
+        ipy = IPython.get_ipython()
+        if ipy is not None:
+            ipy.kernel.do_shutdown(True)    # Colab のランタイム再起動
+    except Exception:
+        import os
+        os.kill(os.getpid(), 9)
+else:
+    print("numpy の入れ替えは起きていません。このまま先へ進んで大丈夫です。")'''
 
 PREAMBLE_BOOT = '''import os
 import subprocess
@@ -115,6 +158,10 @@ def _is_install(src):
 
 def _is_bootstrap(src):
     return "REPO = " in src
+
+
+def _is_restart(src):
+    return "need_restart" in src
 
 
 def _is_legacy_clone(src):
@@ -157,16 +204,17 @@ def build_combined(paths, name="EIS_workshop"):
                       "outputs": [], "source": t}
 
     cells = [md(COMBINED_HEADER), md(PREAMBLE_MD), code(PREAMBLE_PIP),
-             code(PREAMBLE_BOOT)]
+             md(PREAMBLE_RESTART_MD), code(PREAMBLE_RESTART), code(PREAMBLE_BOOT)]
     for p in paths:
         for c in parse(p):
             src = c["source"]
             if c["cell_type"] == "markdown":
-                if src.startswith(BOOTSTRAP_MD):
+                if src.startswith(BOOTSTRAP_MD) or src.startswith(RESTART_MD_HEAD):
                     continue                     # 先頭に 1 つ置いたので不要
                 cells.append(c)
                 continue
-            if _is_install(src) or _is_bootstrap(src) or _is_legacy_clone(src):
+            if (_is_install(src) or _is_bootstrap(src) or _is_restart(src)
+                    or _is_legacy_clone(src)):
                 continue                         # 準備は先頭の 1 組だけ
             cells.append(c)
 

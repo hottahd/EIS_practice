@@ -2434,3 +2434,36 @@ numba 0.60.0 requires numpy<2.1,>=1.22, but you have numpy 2.5.1
 
 ※ `scripts/` 側（`make_fe18_map.py` など、フルディスク level-1 を処理する経路）は
   引き続き aiapy が要る。必要な人だけ `pip install aiapy`。
+
+### Colab で ImportError が出た件と、再起動ガードの追加（2026-08-07）
+
+受講者環境（Colab）で:
+
+```
+ImportError: cannot import name '_center' from 'numpy._core.umath'
+```
+
+**★ 反省: この時点まで Colab で一度も実行していなかった**（ローカルの conda env で
+`verify_notebooks.py` を通しただけ）。Colab 固有の問題は当然そこでは出ない。
+**教材の検証は最終的に Colab で回すまで終わりではない。**
+
+**原因**: pip が numpy を入れ替えた直後に、実行中のセッションが古い numpy を
+掴んだままになる（新しい .py と古いコンパイル済みモジュールが混ざる）。
+`_center` は numpy 2.1 以降の内部関数なので、この症状の典型例。
+
+**対処 1（衝突そのものを減らす）**: 残るパッケージの numpy 要求はすべて
+Colab の既定 (2.0.2) で満たせる（eispac>=1.18, fiasco>=1.25, demregpy>=2.0,
+sunpy>=1.26, ndcube>=1.26）。aiapy を外したので、**新規セッションなら
+numpy は入れ替わらないはず**。
+
+**対処 2（入れ替わっても壊れないように）**: インストールの直後に
+**入れ替えを検出して必要なときだけランタイムを自動再起動するセル**を入れた。
+
+- `sys.modules["numpy"].__version__`（読み込み済み）と
+  `importlib.metadata.version("numpy")`（ディスク上）を比べる
+- 食い違ったら `IPython.get_ipython().kernel.do_shutdown(True)` で再起動
+- 判定自体が失敗した場合も念のため再起動
+- ローカル実行では `get_ipython()` が None なので何も起きない（検証済み）
+
+**既にエラーが出たセッションの直し方**: ディスク上の numpy が中途半端な状態なので、
+**「ランタイム」→「ランタイムを接続解除して削除」**で作り直すのが確実。

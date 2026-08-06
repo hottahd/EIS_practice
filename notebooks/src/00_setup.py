@@ -65,6 +65,50 @@ print("demregpy", demregpy.__version__ if hasattr(demregpy, "__version__") else 
 print("numpy   ", np.__version__)
 
 # %% [markdown]
+# ### インストール直後のランタイム再起動について
+#
+# Colab では、pip が `numpy` などを入れ替えると、**実行中のセッションが
+# 古いモジュールを掴んだまま**になり、あとで次のようなエラーが出ることがある:
+#
+# ```
+# ImportError: cannot import name '_center' from 'numpy._core.umath'
+# ```
+#
+# これはインストールの失敗ではなく、**再起動すれば直る**。
+# 次のセルが入れ替えを検出して、必要なときだけ自動で再起動する。
+#
+# **再起動が起きたら、もう一度このノートを先頭から実行すること。**
+# 2 回目はインストールもダウンロードも済んでいるので一瞬で終わる。
+
+# %%
+import sys
+from importlib.metadata import version
+
+need_restart = False
+try:
+    loaded = sys.modules["numpy"].__version__ if "numpy" in sys.modules else None
+    if loaded is not None and loaded != version("numpy"):
+        need_restart = True
+        print(f"numpy が {loaded} -> {version('numpy')} に入れ替わりました")
+except Exception as e:                      # 判定自体が失敗したら念のため再起動
+    need_restart = True
+    print("numpy の状態を確認できませんでした:", e)
+
+if need_restart:
+    print("ランタイムを再起動します。"
+          "再起動したら、もう一度このノートを先頭から実行してください。")
+    try:
+        import IPython
+        ipy = IPython.get_ipython()
+        if ipy is not None:
+            ipy.kernel.do_shutdown(True)    # Colab のランタイム再起動
+    except Exception:
+        import os
+        os.kill(os.getpid(), 9)
+else:
+    print("numpy の入れ替えは起きていません。このまま先へ進んで大丈夫です。")
+
+# %% [markdown]
 # ## 0-2. 教材リポジトリを取ってくる
 #
 # スクリプトと、IDL/SolarSoft 側で作った**参照データ**（合計 96 KB）が入っている。
