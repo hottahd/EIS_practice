@@ -16,14 +16,14 @@ import eispac
 
 # 見せたいウィンドウ: (波長, ラベル, 形成温度の目安)
 PANELS = [
-    (275.368, "Si VII 275.4",  "0.6 MK  (moss/足元)"),
+    (275.368, "Si VII 275.4",  "0.6 MK  (moss)"),
     (184.536, "Fe X 184.5",    "1.1 MK"),
     (195.119, "Fe XII 195.1",  "1.6 MK"),
     (202.044, "Fe XIII 202.0", "1.8 MK"),
     (262.984, "Fe XVI 263.0",  "2.8 MK"),
     (193.874, "Ca XIV 193.9",  "3.5 MK"),
     (200.972, "Ca XV 201.0",   "4.5 MK"),
-    (192.858, "Ca XVII 192.9", "5.6 MK  (ブレンド有)"),
+    (192.858, "Ca XVII 192.9", "5.6 MK  (blended)"),
 ]
 
 
@@ -32,8 +32,13 @@ def main(datafile, outpng="quicklook.png"):
 
     for ax, (wvl, label, temp) in zip(axes, PANELS):
         cube = eispac.read_cube(datafile, wvl)
-        # 波長方向に積分（NaN は無視）
-        img = np.nansum(cube.data, axis=2)
+        # 波長方向に積分する。
+        # ★ 欠損値は NaN ではなく**大きな負のフラグ値**として入っているので
+        #   np.nansum だけでは防げない（そのまま足すと横縞が出る）。
+        #   eispac が立ててくれる cube.mask で落としてから平均し、
+        #   サンプル数を掛けて「積分値」に戻す。
+        d = np.where(np.asarray(cube.mask, dtype=bool), np.nan, cube.data)
+        img = np.nanmean(d, axis=2) * d.shape[2]
         vmin, vmax = np.nanpercentile(img, [1, 99.5])
         ax.imshow(np.sqrt(np.clip(img, 0, None)), origin="lower", aspect="auto",
                   cmap="inferno", vmin=np.sqrt(max(vmin, 0)), vmax=np.sqrt(vmax))

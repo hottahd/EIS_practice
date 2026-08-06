@@ -122,17 +122,23 @@ print("単位:", cube.unit)
 #   画像に見えるが**同時刻ではない**。左端と右端で 1 時間離れている。
 
 # %%
-import astropy.units as u
 h = cube.meta["index"]
-print("観測プログラム :", h.get("tl_id"), h.get("study_id"))
-print("開始           :", h.get("date_obs"))
-print("終了           :", h.get("date_end"))
-print("ラスター step数 :", h.get("nraster"))
-print("露出時間 [s]   :", h.get("exptime"))
+print("観測プログラム :", h["stud_acr"])          # スタディの略称
+print("提案者         :", h["st_auth"])           # study author
+print("開始           :", h["date_obs"])
+print("終了           :", h["date_end"])
+print("ラスター step数 :", h["nraster"])
+print("露出時間 [s]   :", cube.meta["duration"][0])   # ステップごとに入っている
+print("スリット       :", h["slit_id"])
 
 # %% [markdown]
-# 観測プログラム名は `HPW021_VEL_120x512v1`。
+# 観測プログラム名は `HPW021_VEL_120x512v1`、study author は `Harry Warren`。
 # **HPW = Harry P. Warren** — 論文の著者本人が設計した観測である。
+# 「使いたい輝線が入った観測を自分で設計する」ところまで含めて研究になる。
+#
+# **★ 露出時間はヘッダの `exptime` には入っていない**（`None` が返る）。
+# EIS はステップごとに露出時間を持ちうるので、
+# eispac は `cube.meta["duration"]`（長さ = ラスターのステップ数）に入れている。
 #
 # ---
 #

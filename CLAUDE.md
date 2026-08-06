@@ -22,8 +22,36 @@ Claude の会話は切れる前提で作業する。**作業内容は必ず `doc
 | `docs/01_paper_analysis.md` | Warren+2012 の手法を分解したもの。教材設計の元ネタ |
 | `docs/02_workshop_plan.md` | 講習会のカリキュラム設計 |
 | `docs/03_environment.md` | 環境構築手順（受講者に配る想定） |
+| `docs/04_physics_primer.md` | **理論屋向けの物理解説**（なぜそうするのかを全ステップで） |
 
 新しいセッションを始めたら、まず `docs/00_log.md` の末尾を読むこと。
+
+## 講習会ノートブック（`notebooks/`）
+
+**`.ipynb` を手で書かない。** `notebooks/src/NN_*.py` に `# %%` 区切りの
+素の Python として書き、`python notebooks/build_notebooks.py` で `.ipynb` を生成する。
+
+| ノート | 内容 | 状態 |
+|---|---|---|
+| `00_setup` | 環境構築とデータ取得（すべて pip・登録不要） | ✅ |
+| `01_raster` | EIS のデータを見る。**欠損値の罠**もここで踏ませる | ✅ |
+| `02_fitting` | ガウシアンフィット。成分順の罠、平均→fit の順番、誤差の床 | ✅ |
+| `03_aia_fe18` | AIA 94 → Fe XVIII。**Eq.(A1) の誤植を実データで確かめる** | ✅ |
+| `04_coalign` | 座標合わせ、inter-moss 箱の選択 | ✅ |
+| `05_table2` | **論文 Table 2 と答え合わせ**（山場） | ✅ |
+| `06`–`10` | 寄与関数 / DEM / Ca XVII / 較正 / 他天体 | 未着手 |
+
+**編集したら必ず検証すること**（講習会当日に動かないのが最悪なので）:
+
+```bash
+python notebooks/verify_notebooks.py        # コードセルを上から順に exec
+python notebooks/verify_notebooks.py 03 04  # 番号で絞る
+```
+
+Colab 専用セル（`!pip` などを含むもの）は自動で飛ばし、番号を表示する。
+
+**図のラベルは英語で書く。** Colab に日本語フォントが無いので
+日本語ラベルは豆腐（□）になる。**説明は日本語、図は英語**。
 
 ## 検証済みスクリプト（`scripts/`）
 
@@ -67,7 +95,7 @@ Claude の会話は切れる前提で作業する。**作業内容は必ず `doc
 
 ### Python (eispac) 側
 **論文 Table 2 を再現できた。** 箱 y=[244:274], x=[32:40] で
-21 輝線中 14 本が論文の 15% 以内、median ratio 0.89、ばらつき 0.10 dex。
+21 輝線中 13 本が論文の 15% 以内、median ratio 0.89、ばらつき 0.10 dex。
 
 ### IDL / SolarSoft 側（同日、環境が見つかったので実施）
 **level-0 → eis_prep → 22 輝線フィット → MCMC_DEM まで通した。**
@@ -99,10 +127,19 @@ Claude の会話は切れる前提で作業する。**作業内容は必ず `doc
    - Fe XIII が DEM から 1.3-2.8 倍ずれるのは **論文側でも同じ**
      （Warren+2011 で R=1.87/1.90）。原子データの既知の問題。
    - 参照論文は `papers/refs/`（arXiv 版）。
-4. **`eis_getwindata` の欠損値 (-100) はサンプル単位でマスクすること**。
-   怠ると最も明るい線（Fe XII 195.119）だけ 24% 小さくなる。
+4. **欠損値はサンプル単位でマスクすること（IDL / Python の両方）**。
    論文 §3 も "In computing these averaged profiles, missing data are not
    included" とわざわざ書いている。
+   - IDL: `eis_getwindata` の欠損値は `-100`。怠ると最も明るい線
+     （Fe XII 195.119）だけ 24% 小さくなる。
+   - **Python: 欠損は NaN では入っていない。** level-0 の -100 に較正係数を
+     掛けた**大きな負のフラグ値**（-1000〜-6000）なので、
+     `np.isfinite` / `np.nansum` では**素通りする**。
+     eispac が立てる **`cube.mask`（True = 使用禁止）で落とす**こと。
+     エラーは出ず、平均が静かに下がるだけ。クイックルック図に
+     **横方向の黒い縞**が出たらこれを疑う。
+     （2026-08-06 に `fit_box_spectra.py` / `quicklook_raster.py` を修正。
+       採用箱では median 0%、弱い線だけ数 % 動いた）
 
 詳細は `docs/00_log.md`。
 
@@ -129,7 +166,7 @@ python scripts/quicklook_raster.py data/eis/eis_20110702_030712.data.h5 figures/
 python scripts/make_fe18_map.py       data/eis/eis_20110702_030712.data.h5
 python scripts/coalign_eis_aia.py     data/eis/eis_20110702_030712.data.h5
 python scripts/compare_table2.py      data/eis/eis_20110702_030712.data.h5 "244:274,32:40"
-#   -> 21 輝線中 14 本が論文 Table 2 の 15% 以内、median ratio 0.89 になれば成功
+#   -> 21 輝線中 13 本が論文 Table 2 の 15% 以内、median ratio 0.89 になれば成功
 ```
 
 `.claude/settings.json` の承認ルールにはこのマシン固有の
@@ -215,9 +252,14 @@ Python (eispac) だけでは解決できず、SSW が要る項目。
 
 ## 環境（2026-08-06 時点で確認済み）
 
-- Python: `/home/sc/c0234hotta/miniforge3/bin/python` (3.12.13, miniforge base)
-  - 導入済み: numpy 2.5.1, scipy 1.18.0, astropy 8.0.1, sunpy 8.0.0, matplotlib 3.11.1, h5py 3.16.0
-  - **未導入**: eispac, ndcube, aiapy, demregpy, ChiantiPy → 講習会用の専用 conda env を作る想定
+- **解析に使う env（これを使うこと）**:
+  `/scr/a000/c0234hotta/home/miniforge3/envs/eis/bin/python`
+  - eispac 0.99.4, fiasco 0.8.2, sunpy 8.0.0, aiapy 0.12.1, demregpy 1.0.0,
+    ChiantiPy 0.16.0, numpy 2.5.1
+  - ★ 2026-08-06 訂正: 以前書いていた `/home/sc/c0234hotta/miniforge3/envs/eis`
+    は**現在は解決しない**（`/home/sc/...` が見えない）。上のパスが実体。
+- base: `/cidashome/sc/c0234hotta/miniforge3/bin/python` (3.12.13)
+  - numpy/scipy/astropy/sunpy/matplotlib/h5py はあるが **eispac 等は無い**
 - IDL / SolarSoft: **ある**（2026-08-06 に判明。以前の「無い」は誤り）
   - IDL 9.2.0 `/usr/local/nv5/idl92`（名古屋大学ライセンス、`/usr/local/bin/idl`）
   - SSW `/opt/ssw`、SSWDB `/opt/sswdb`。`$SSW` は未設定なので自分で export する

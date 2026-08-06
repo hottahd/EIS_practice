@@ -22,6 +22,7 @@ logs/
 # 中間ファイル。小さいテキストだけ選んで入れる（下の ! を参照）
 work/*
 !work/gofnt_chianti901.txt
+!work/gofnt_chianti901_005.txt
 !work/aia94_fe18_response.txt
 !work/eis_calcurve_20110702.txt
 !work/eispac_templates.csv

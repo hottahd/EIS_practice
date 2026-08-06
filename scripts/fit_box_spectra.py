@@ -21,15 +21,27 @@ from lines_warren2012 import LINES, pick_component
 
 
 def average_spectrum(datafile, wvl, y0, y1, x0, x1):
-    """箱の中でスペクトルを平均する。NaN（欠損・不良ピクセル）は平均に含めない。
+    """箱の中でスペクトルを平均する。欠損・不良ピクセルは平均に含めない。
 
-    返り値: (波長配列, 平均強度, 平均強度の誤差)
+    ★ 欠損値は NaN では入っていない。EIS の level-1 では欠損は負の
+      フラグ値（level-0 の -100 に較正係数を掛けたもの。実際には
+      -1000 〜 -6000 程度の大きな負の数）として入っており、
+      `np.isfinite` では素通りしてしまう。eispac はこれを `cube.mask`
+      （True = 使ってはいけないサンプル）に立ててくれるので、それを使う。
+
+      マスクを忘れても**エラーは出ない**。平均が静かに下がるだけ。
+      この箱では大半の線で 1% 未満だが、弱い線では数 % ずれる
+      （Ca XVII +6.9%, Ca XVI -4.6%, Ar XIV +3.2%）。
+      論文 §3 も "missing data are not included" とわざわざ書いている。
+
+    返り値: (波長配列, 平均強度, 平均強度の誤差, 使ったピクセル数)
     """
     cube = eispac.read_cube(datafile, wvl)
 
     data = cube.data[y0:y1, x0:x1, :]              # (ny, nx, nwvl)
     errs = cube.uncertainty.array[y0:y1, x0:x1, :]
     wave = cube.wavelength[y0:y1, x0:x1, :]
+    bad = np.asarray(cube.mask[y0:y1, x0:x1, :], dtype=bool)
 
     # EIS は波長が空間位置ごとに僅かにずれる（スリット傾き・軌道変動）。
     # 平均プロファイルを作るときは共通の波長グリッドに載せ替える必要がある。
@@ -42,7 +54,7 @@ def average_spectrum(datafile, wvl, y0, y1, x0, x1):
         print(f"  ! 警告: 箱内の波長ずれが大きい (std={wspread:.4f} A, "
               f"1pix={abs(dw):.4f} A)。補間を検討すること")
 
-    good = np.isfinite(data)
+    good = np.isfinite(data) & ~bad
     n = good.sum(axis=(0, 1))                       # 各波長で有効なピクセル数
     inten = np.nansum(np.where(good, data, 0), axis=(0, 1)) / np.maximum(n, 1)
     # 平均の誤差 = sqrt(Σσ²)/N
