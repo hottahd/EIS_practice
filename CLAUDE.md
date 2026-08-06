@@ -1,5 +1,15 @@
 # EIS_practice — Hinode/EIS データ解析講習会の準備
 
+## 公開状態とライセンス
+
+**public**（2026-08-07 に公開）。**CC BY 4.0**（`LICENSE`）。
+
+- **論文 PDF はリポジトリに入れない。** 再配布の許諾が無い（出版社版は © AAS/IOP、
+  arXiv 版は nonexclusive-distrib 1.0）。`.gitignore` で除外済み。
+  出典と取得方法は `papers/README.md` / `papers/fetch_papers.sh`。
+  **PDF を追加するコミットを作らないこと。**
+- 公開前に履歴から PDF を除去済み（`git filter-repo`。2026-08-07。全 hash が変わった）。
+
 ## このリポジトリの目的
 
 日本の太陽物理研究者が Hinode/EIS のデータを自力で扱えるようになるための
