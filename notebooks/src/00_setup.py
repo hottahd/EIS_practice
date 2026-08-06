@@ -1,84 +1,59 @@
 # %% [markdown]
-# # モジュール 0: 環境構築とデータ取得
+# # Hinode/EIS データ解析講習会
 #
-# Hinode/EIS データ解析講習会 — Warren, Winebarger & Brooks (2012) を再現する
+# ## この講習会について
 #
-# **このノートで何をするか**
+# **狙いは Solar-C (EUVST) の準備**です。打ち上げたその日から解析できるように、
+# いま手に入るデータで実力をつけておきます。
 #
-# 1. 必要なパッケージを入れる（すべて pip、5 分程度）
-# 2. 観測データを取る（EIS 94 MB + AIA 3 MB、**ユーザ登録は不要**）
-# 3. 動作確認
+# EUVST は EIS と同じ**スリット走査型の EUV 分光器**で、
+# **EUV バンド 170–215 Å は EIS の短波長帯 171–212 Å とほぼ同じ**です。
+# つまり**同じ輝線を撮ります**。今日フィットする Fe XII や Ca XV は、
+# そのまま EUVST の主力になります。
 #
-# **題材**: 2011 年 7 月 2 日 03:07 UT、活動領域 NOAA 1243
-# （論文 Table 1 の region 7）。**論文に観測値の表が載っている唯一の活動領域**なので、
-# 自分の解析結果を 1 行ずつ答え合わせできる。
+# | | EUVST (2028 打ち上げ予定) | Hinode/EIS (2006–) |
+# |---|---|---|
+# | 波長帯 | **170–215 Å** + 460–1220 Å | 171–212 / 245–291 Å |
+# | 温度被覆 | 2×10⁴ – 1.5×10⁷ K（シームレス） | 飛び飛び |
+# | 空間分解能 | **0.4″** | ~2″ |
+# | カデンス | **1 秒** | 数十秒 |
+# | 実効面積 | **10–30 倍** | — |
+#
+# **今日やることは、そのまま 2028 年に使えます。**
+#
+# ## 今日の内容
+#
+# | 章 | 内容 |
+# |---|---|
+# | 1 | EIS のデータを見る |
+# | 2 | フィットして**強度**を出す |
+# | 3 | **速度**を出す |
+# | 4 | 線幅から**非熱的速度**を出す |
+# | 5 | **温度分布 (DEM)** を出す |
+#
+# 題材は **2011 年 7 月 2 日 03:07 UT、活動領域 NOAA 1243**。
+# Warren, Winebarger & Brooks (2012), ApJ 759, 141 が使ったデータで、
+# **論文に観測値の表が載っている**ので、自分の結果と答え合わせができます。
 
 # %% [markdown]
-# ## 0-1. パッケージを入れる
+# ## 準備
 #
-# | パッケージ | 用途 |
-# |---|---|
-# | `eispac` | EIS の level-1 HDF5 を読む、輝線フィット |
-# | `sunpy` | AIA の画像を扱う |
-# | `fiasco` | CHIANTI の原子データから寄与関数 G(T) を作る |
-# | `demregpy` | 正則化インバージョンで DEM を解く |
-#
-# `aiapy` は**入れない**。この教材が使う AIA は JSOC の synoptic 版で、
-# 既に level-1.5 なので `aiapy` の前処理が要らないため
-# （`aiapy` は numpy≥2.1 を要求し、Colab に元から入っている `numba` と衝突する）。
-# フルディスクの level-1 を自分で処理したい人だけ `pip install aiapy` すればよい。
+# パッケージを入れて、教材リポジトリとデータを取ってきます。
+# **観測データは必要になったところで自動的に取得**されます（既にあれば何もしません）。
 
 # %%
 !pip install -q eispac fiasco demregpy
 
 # %% [markdown]
-# ### ★ 赤い `ERROR:` が出ても、たいていは無視してよい
+# ### 赤い `ERROR:` が出ても、たいていは無視してよい
 #
-# Colab では、上のインストールで次のような行が出ることがある:
+# Colab では `google-colab 1.0.0 requires requests==2.32.4, but you have ...`
+# のような行が出ることがあります。**インストールの失敗ではなく**、
+# Colab に元から入っている別のパッケージとの食い違いの報告です。
+# 教材で使うものは正しく入っています。
 #
-# ```
-# ERROR: pip's dependency resolver does not currently take into account all the
-# packages that are installed. ...
-# google-colab 1.0.0 requires requests==2.32.4, but you have requests 2.34.2
-# ```
-#
-# これは**インストールの失敗ではない**。pip が
-# 「Colab に元から入っている別のパッケージが要求するバージョンと食い違っている」
-# と報告しているだけで、教材で使うパッケージ自体は正しく入っている。
-#
-# - `requests` は `sunpy` が 2.33 以上を要求するため上がる。
-#   Colab 自身の機能（Drive 連携など）が使うものだが、この教材では問題にならない。
-# - `numpy` / `numba` の衝突が出る場合は `aiapy` が原因なので、**入れていない**（上記）。
-#
-# **次のセルでバージョンが表示されれば問題なし。**
-# もし後のセルで `numpy` 関連のエラーが出たら、
-# **「ランタイム」→「セッションの再起動」** をして、**先頭から実行し直す**こと
-# （再起動してもダウンロード済みのファイルは残るので、待ち時間はほとんど無い）。
-
-# %%
-import eispac, sunpy, fiasco, demregpy
-import numpy as np, matplotlib.pyplot as plt
-print("eispac  ", eispac.__version__)
-print("sunpy   ", sunpy.__version__)
-print("fiasco  ", fiasco.__version__)
-print("demregpy", demregpy.__version__ if hasattr(demregpy, "__version__") else "(ok)")
-print("numpy   ", np.__version__)
-
-# %% [markdown]
-# ### インストール直後のランタイム再起動について
-#
-# Colab では、pip が `numpy` などを入れ替えると、**実行中のセッションが
-# 古いモジュールを掴んだまま**になり、あとで次のようなエラーが出ることがある:
-#
-# ```
-# ImportError: cannot import name '_center' from 'numpy._core.umath'
-# ```
-#
-# これはインストールの失敗ではなく、**再起動すれば直る**。
-# 次のセルが入れ替えを検出して、必要なときだけ自動で再起動する。
-#
-# **再起動が起きたら、もう一度このノートを先頭から実行すること。**
-# 2 回目はインストールもダウンロードも済んでいるので一瞬で終わる。
+# 次のセルは、`numpy` が入れ替わった場合だけランタイムを再起動します
+# （再起動したら、もう一度先頭から実行してください。2 回目は一瞬で終わります）。
 
 # %%
 import sys
@@ -90,7 +65,7 @@ try:
     if loaded is not None and loaded != version("numpy"):
         need_restart = True
         print(f"numpy が {loaded} -> {version('numpy')} に入れ替わりました")
-except Exception as e:                      # 判定自体が失敗したら念のため再起動
+except Exception as e:
     need_restart = True
     print("numpy の状態を確認できませんでした:", e)
 
@@ -101,176 +76,44 @@ if need_restart:
         import IPython
         ipy = IPython.get_ipython()
         if ipy is not None:
-            ipy.kernel.do_shutdown(True)    # Colab のランタイム再起動
+            ipy.kernel.do_shutdown(True)
     except Exception:
         import os
         os.kill(os.getpid(), 9)
 else:
     print("numpy の入れ替えは起きていません。このまま先へ進んで大丈夫です。")
 
-# %% [markdown]
-# ## 0-2. 教材リポジトリを取ってくる
-#
-# スクリプトと、IDL/SolarSoft 側で作った**参照データ**（合計 96 KB）が入っている。
-#
-# 参照データの中身:
-#
-# | ファイル | 中身 | 何のために |
-# |---|---|---|
-# | `work/gofnt_chianti901.txt` | 22 輝線の G(T)（0.1 dex） | CHIANTI を落とさなくても DEM が解ける |
-# | `work/gofnt_chianti901_005.txt` | 同（0.05 dex） | demregpy 用 |
-# | `work/aia94_fe18_response.txt` | AIA 94 の Fe XVIII 応答 | 公式応答は低温線込みで使えない |
-# | `work/eis_calcurve_20110702.txt` | 打ち上げ後較正カーブ | 較正の効きを試す |
-# | `work/idl_intensities_tied.csv` | IDL で出した輝線強度 | 自分の結果の答え合わせ |
-# | `work/mcmc_dem_result.txt` | PINTofALE MCMC の DEM | 手法比較の相手 |
-
-# %%
-!git clone -q https://github.com/hottahd/EIS_practice.git
-%cd EIS_practice
-!ls work/ | head -20
-
-# %% [markdown]
-# ## ★ Colab の保存とセッションについて（最初に知っておくこと）
-#
-# GitHub から開いたノートは、Colab では**読み取り専用の一時セッション**として扱われる。
-#
-# | | どうなるか |
-# |---|---|
-# | ノートへの編集・実行結果 | **保存されない**。閉じたら消える |
-# | ダウンロードしたデータ (`data/`, `work/`) | **仮想マシンごと消える** |
-# | Google Drive | **何も書かれない**（自分でマウントしない限り触らない） |
-#
-# **残したいときは「ファイル → ドライブにコピーを保存」。**
-# `MyDrive/Colab Notebooks/` にコピーが作られ、以降はそれが自分のノートになる
-# （ただし教材リポジトリ側が更新されても、そのコピーには反映されない）。
-#
-# **仮想マシンが消えるタイミング**: 放置すると数十分で切断、
-# 使っていても無料枠では最長で半日程度。
-# → **EIS の 94 MB はセッションが切れるたびに落とし直し**になる。
-#
-# そのため、**どのノートも「必要なデータをその場で取得する」設計**にしてある。
-# 講習会の途中で切れても、先頭のセルから流し直せば復帰できる。
-#
-# 落とし直しを避けたい人は Drive をマウントして `data/` をそこに置いてもよい:
-#
-# ```python
-# from google.colab import drive
-# drive.mount('/content/drive')
-# ```
-#
-# （許可ダイアログを踏む必要があるので、講習会の既定にはしていない）
-
-# %% [markdown]
-# ## 0-3. EIS のデータを取る
-#
-# **NRL のアーカイブ**から level-1 HDF5 を直接落とす。ユーザ登録は要らない。
-#
-#     https://eis.nrl.navy.mil/level1/hdf5/YYYY/MM/DD/eis_YYYYMMDD_HHMMSS.{data,head}.h5
-#
-# - `.data.h5` (94 MB): スペクトルの中身
-# - `.head.h5` (421 KB): ヘッダ（波長軸、ポインティング、露出時間など）
-#
-# **level-1 とは**: CCD の生データ（level-0）に対して
-# ペデスタル・暗電流を引き、不良画素と宇宙線を除き、
-# 実効面積で割って物理単位 (erg cm⁻² s⁻¹ sr⁻¹ Å⁻¹) にしたもの。
-
 # %%
 import os
-os.makedirs("data/eis", exist_ok=True)
-base = "https://eis.nrl.navy.mil/level1/hdf5/2011/07/02"
-for f in ["eis_20110702_030712.data.h5", "eis_20110702_030712.head.h5"]:
-    if not os.path.exists(f"data/eis/{f}"):
-        !wget -q -c -P data/eis {base}/{f}
-!ls -lh data/eis/
+import subprocess
+import sys
 
-# %% [markdown]
-# ## 0-4. AIA の画像を取る
-#
-# **JSOC の synoptic アーカイブ**を使う。1024×1024（2.4″/画素）、1 枚 1 MB 弱、
-# **登録不要**。
-#
-#     http://jsoc.stanford.edu/data/aia/synoptic/YYYY/MM/DD/HHHH/AIAyyyymmdd_hhmm_wwww.fits
-#
-# フルディスクの level-1（4096²、1 枚 65 MB）は VSO 経由で取れるが、
-# サーバが遅くてタイムアウトしやすい。**Colab では synoptic を使うこと。**
-# 15″×23″ の箱なら 2.4″/画素でも 6×10 画素あり、平均値を出すには十分。
+REPO = "https://github.com/hottahd/EIS_practice.git"
+if not os.path.exists("scripts/lines_warren2012.py"):      # リポジトリの外にいる
+    if not os.path.exists("EIS_practice"):
+        print("教材リポジトリを取得中 ...")
+        subprocess.run(["git", "clone", "-q", REPO], check=True)
+    os.chdir("EIS_practice")
+sys.path.insert(0, "scripts")
+print("作業ディレクトリ:", os.getcwd())
 
 # %%
-os.makedirs("data/sdo/synoptic", exist_ok=True)
-base = "http://jsoc.stanford.edu/data/aia/synoptic/2011/07/02/H0300"
-for w in ["0094", "0171", "0193"]:
-    f = f"AIA20110702_0338_{w}.fits"
-    if not os.path.exists(f"data/sdo/synoptic/{f}"):
-        !wget -q -c -P data/sdo/synoptic {base}/{f}
-!ls -lh data/sdo/synoptic/
+import eispac
+import sunpy
+import numpy as np
+
+from workshop import ensure_eis
+
+print("eispac", eispac.__version__, " sunpy", sunpy.__version__,
+      " numpy", np.__version__)
+ensure_eis()          # EIS の level-1 データ（94 MB）。既にあれば何もしない
+print("準備完了")
 
 # %% [markdown]
-# ## 0-5. 動作確認
+# **★ Colab の保存について**
 #
-# EIS のデータを 1 つ読んでみる。Fe XII 195.119 Å は活動領域で最も明るい輝線。
-
-# %%
-cube = eispac.read_cube("data/eis/eis_20110702_030712.data.h5", 195.119)
-print("データの形 (ny, nx, nwvl) =", cube.data.shape)
-print("波長 [Å]:", float(cube.wavelength[0,0,0]), "-", float(cube.wavelength[0,0,-1]))
-print("単位:", cube.unit)
-
-# %% [markdown]
-# ### この観測がどういうものか
+# GitHub から開いたノートは**読み取り専用の一時セッション**です。
 #
-# - **512 × 60 × 24** = (スリット方向の画素) × (ラスターのステップ) × (波長の画素)
-# - EIS は**スリット分光器**。細長いスリット（1″×512″）を太陽に当て、
-#   その 1 次元の像を波長分散させて CCD に落とす。
-# - 2 次元の画像がほしいので、**スリットを横に 60 回振る** → これがラスター。
-# - **★ 重要**: 1 ステップ約 60 秒なので、**全体で約 62 分かかる**。
-#   画像に見えるが**同時刻ではない**。左端と右端で 1 時間離れている。
-
-# %%
-h = cube.meta["index"]
-print("観測プログラム :", h["stud_acr"])          # スタディの略称
-print("提案者         :", h["st_auth"])           # study author
-print("開始           :", h["date_obs"])
-print("終了           :", h["date_end"])
-print("ラスター step数 :", h["nraster"])
-print("露出時間 [s]   :", cube.meta["duration"][0])   # ステップごとに入っている
-print("スリット       :", h["slit_id"])
-
-# %% [markdown]
-# 観測プログラム名は `HPW021_VEL_120x512v1`、study author は `Harry Warren`。
-# **HPW = Harry P. Warren** — 論文の著者本人が設計した観測である。
-# 「使いたい輝線が入った観測を自分で設計する」ところまで含めて研究になる。
-#
-# **★ 露出時間はヘッダの `exptime` には入っていない**（`None` が返る）。
-# EIS はステップごとに露出時間を持ちうるので、
-# eispac は `cube.meta["duration"]`（長さ = ラスターのステップ数）に入れている。
-#
-# ---
-#
-# ## 0-6. スペクトルウィンドウを見る
-#
-# EIS は 171–212 Å と 245–291 Å の 2 バンドを観測できるが、
-# 全部を降ろすとテレメトリが足りない。そこで
-# **必要な輝線の周りだけを切り出して降ろす** → これが「スペクトルウィンドウ」。
-#
-# **どの輝線が使えるかは観測プログラムの設計時に決まっている。**
-# この観測には 25 個のウィンドウがあり、論文が使う 22 輝線が全部入っている。
-
-# %%
-from eispac import read_wininfo
-wi = read_wininfo("data/eis/eis_20110702_030712.head.h5")
-print(f"{'#':>3} {'line_id':<22} {'wvl_min':>9} {'wvl_max':>9}")
-for w in wi:
-    print(f"{w['iwin']:3d} {str(w['line_id']):<22} {w['wvl_min']:9.3f} {w['wvl_max']:9.3f}")
-
-# %% [markdown]
-# ---
-#
-# ## まとめ
-#
-# - パッケージはすべて pip で入る
-# - データは**登録不要**で取れる（EIS は NRL、AIA は JSOC synoptic）
-# - この観測は **62 分かけて撮った 60 ステップのラスター**
-# - **25 個のスペクトルウィンドウ**に論文の 22 輝線が全部入っている
-#
-# 次（モジュール 1）では、フィットせずに手早く強度マップを作り、
-# 「どこを解析するか」を決める。
+# - 編集や実行結果を残したいときは「ファイル → ドライブにコピーを保存」
+# - 仮想マシンが切れるとダウンロードしたデータも消えますが、
+#   **上から流し直せば復帰します**（既にあるファイルは取得し直しません）

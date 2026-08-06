@@ -186,3 +186,29 @@ def aia_on_eis_grid(path="data/cache/aia_on_eis_grid.npz", force=False):
     np.savez(path, **out)
     print(f"wrote {path}")
     return out
+
+
+# --- ラスターの一部をフィットする（第 3・4 章で共有する）------------------
+_FIT_CACHE = {}
+
+
+def fit_region(wvl=195.119, tmplt_name="fe_12_195_119.2c.template.h5",
+               y0=180, y1=340, ncpu=2):
+    """ラスターの y=[y0:y1] を丸ごとフィットして結果を返す（結果は使い回す）。
+
+    速度（第 3 章）と線幅（第 4 章）は**同じフィット**から出るので、
+    2 度フィットしないようにキャッシュする。
+    """
+    key = (wvl, y0, y1)
+    if key in _FIT_CACHE:
+        return _FIT_CACHE[key]
+
+    import eispac
+    ensure_eis()
+    tmplt = eispac.read_template(eispac.data.get_fit_template_filepath(tmplt_name))
+    cube = eispac.read_cube(EIS_FILE, tmplt.central_wave)
+    print(f"y=[{y0}:{y1}] をフィット中（{(y1-y0)*cube.data.shape[1]} スペクトル）...")
+    fit = eispac.fit_spectra(cube[y0:y1, :, :], tmplt, ncpu=ncpu,
+                             ignore_warnings=True)
+    _FIT_CACHE[key] = (fit, cube)
+    return fit, cube
