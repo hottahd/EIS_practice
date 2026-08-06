@@ -40,15 +40,69 @@ Claude の会話は切れる前提で作業する。**作業内容は必ず `doc
 | `coalign_eis_aia.py` | EIS↔AIA 相互相関で座標合わせ、AIA を EIS 格子へ |
 | `select_intermoss.py` | inter-moss 箱の候補を機械的に洗い出す |
 | `compare_table2.py` | 論文 Table 2 と数値照合。「箱の選び方」を傾きで診断 |
+| `scan_boxes.py` | 箱を総当たりして論文に最も合う場所を探す（集計スコア） |
+| `scan_perline.py` | 同上、ただし**輝線ごとの ratio を全記録**（上位だけ見ると誤る） |
+| `scan_ratios.py` | 窓積分の比だけで高速に候補箱を探す |
+| `fit_perpixel_box.py` | 「平均→fit」と「fit→平均」を比較（論文 §3 は前者） |
+| `extract_paper_boxes.py` | **論文 Figure 1-3 の緑枠から 15 領域の箱の座標を実測** |
+| `fetch_pintofale.sh` | PINTofALE 一式を取得（公式は「廃止」と書いているが生きている） |
+
+### IDL / SolarSoft 側（`scripts/idl/`）
+
+| スクリプト | 役割 |
+|---|---|
+| `run_sswidl.sh` | SSWIDL をヘッドレスで回すラッパ。踏んだ罠は全部コメントにある |
+| `01_eis_prep.pro` | DARTS の level-0 → `eis_prep` → level-1 + error |
+| `02_explore_windata.pro` | windata の構造と座標系を調べる（eispac との対応確認） |
+| `03/04_fit_box*.pro` | 22 輝線フィット（04 は線幅共有＋欠損マスク修正版） |
+| `05b_ca17_ratios.pro` | Ca XVII 分離用の原子データ比を CHIANTI から取得 |
+| `06_dump_spectra.pro` | 箱内平均スペクトルを書き出す（Python と突き合わせる用） |
+| `08_fit_ca.pro` | **Ca 線を論文 p.6 の拘束どおりに解く**（Ko+2009 の Ca XVII 分離込み） |
+| `09_gofnt.pro` | CHIANTI 9.0.1 で 22 輝線の G(T)（Feldman 1992 + chianti.ioneq） |
+| `10_poa_check.pro` | PINTofALE が IDL 9.2 でコンパイルできるか確認（29/29 成功） |
+| `11_calcurve.pro` | **打ち上げ後較正カーブ**（Warren+2014 NRL / Del Zanna 2013） |
+| `13_mcmc_dem.pro` | **PINTofALE MCMC_DEM で DEM を出す**。単位のつじつまはコメント参照 |
 
 ## 到達済みの成果（2026-08-06）
 
+### Python (eispac) 側
 **論文 Table 2 を再現できた。** 箱 y=[244:274], x=[32:40] で
 21 輝線中 14 本が論文の 15% 以内、median ratio 0.89、ばらつき 0.10 dex。
 
-準備の過程で 2 つの重要な発見:
+### IDL / SolarSoft 側（同日、環境が見つかったので実施）
+**level-0 → eis_prep → 22 輝線フィット → MCMC_DEM まで通した。**
+
+1. **IDL と eispac は 22 輝線すべてで一致**（小数第 2 位まで）。median 0.887。
+   → 未解決だった食い違い（Fe XVI 0.62、S XIII 0.72、Si VII 0.39）は
+     **eispac 固有の問題ではない**ことが確定。
+2. **MCMC_DEM が論文 Table 2 の R 列を再現した。** Fe XIII だけ大きく外れ、
+   Ar XIV / Ca XIV / Ca XV が揃って 1.3-1.5 になるという論文の特徴まで一致
+   （論文 1.36/1.31/1.43、我々 1.37/1.35/1.46）。
+   EM 分布のピークは logT=6.60 = **4.0 MK**（論文アブストラクトと一致）。
+   → **絶対強度が 11% 低くても DEM 解析の結論は論文と同じ。**
+3. **Ca XVII のブレンド分離ができた**（Ko et al. 2009 相当）。4.99 → 0.767。
+4. **論文が書いていない inter-moss 箱の座標を Figure 1-3 から復元**（15 領域ぶん）。
+
+### 準備の過程での重要な発見
 1. **論文 Eq.(A1) の指数は誤植**。正しくは定数項つき 3 次式（実データで確定）
-2. **eispac に Ca XVII 192.858 のブレンド分離テンプレートが無い**（未解決・要自作）
+2. **eispac に Ca XVII 192.858 のブレンド分離テンプレートが無い**
+   （SSW 側で正解値を作ったので、自作テンプレートの検証はできる）
+3. **Si VII 275.368 が論文の 0.39 倍なのは未解決。** ただし範囲は絞れた。
+   - 容疑を 10 個潰した（フィッター実装 / eispac 固有 / 箱の位置 /
+     打ち上げ後較正 2 種 / 実効面積のバージョン / despike / 欠損値処理 /
+     フィットの順番 / 未モデル化のブレンド / 「箱で説明できる」説）
+   - **決め手は AIA Fe XVIII**。Si VII が合う箱は AIA Fe XVIII が
+     論文の 0.161 倍（6 分の 1）で、論文 Table 2 の AIA 行と整合しない。
+     逆に AIA が合う箱では Si VII が必ず 2.6 倍低い。
+   - → **論文 Table 2 の Si VII 値は、同じ Table 2 の AIA Fe XVIII 値と
+     整合しない**という形まで絞れた。著者に問い合わせる価値がある。
+   - Fe XIII が DEM から 1.3-2.8 倍ずれるのは **論文側でも同じ**
+     （Warren+2011 で R=1.87/1.90）。原子データの既知の問題。
+   - 参照論文は `papers/refs/`（arXiv 版）。
+4. **`eis_getwindata` の欠損値 (-100) はサンプル単位でマスクすること**。
+   怠ると最も明るい線（Fe XII 195.119）だけ 24% 小さくなる。
+   論文 §3 も "In computing these averaged profiles, missing data are not
+   included" とわざわざ書いている。
 
 詳細は `docs/00_log.md`。
 
@@ -82,50 +136,85 @@ python scripts/compare_table2.py      data/eis/eis_20110702_030712.data.h5 "244:
 miniforge 絶対パスが入っているが、`Bash(python *)` 等の一般パターンも
 入れてあるので別マシンでもそのまま使える。
 
-## ★ IDL / SSWIDL があるサーバーでやるべきこと
+## ★ IDL / SSWIDL でやるべきこと（**このマシンで全部できる**）
+
+**訂正 (2026-08-06)**: 「この計算機には IDL / SSW が無い」は**誤り**だった。
+実際には全部揃っている。下の「環境」節を参照。
+
+| | 場所 |
+|---|---|
+| IDL 9.2.0 (NV5, 名古屋大学ライセンス) | `/usr/local/nv5/idl92`、`idl` は PATH 上 |
+| SolarSoft (2021-04 版) | `/opt/ssw` → `/lustre/sc/ssw` |
+| SSWDB | `/opt/sswdb` → `/lustre/sc/sswdb` |
+| Hinode/EIS（較正データ 2.1 GB 込み） | `/opt/ssw/hinode/eis` |
+| **PINTofALE** | `/opt/ssw/packages/poa`（放射率 DB 401 MB 込み） |
+| CHIANTI 9.0.1 | `/opt/ssw/packages/chianti/dbase` (1.6 GB) |
+| Warren 本人のルーチン群 | `/opt/ssw/hinode/eis/idl/atest/hwarren/` |
+
+実行は `bash scripts/idl/run_sswidl.sh prog.pro logfile`。
+lustre が遅く SSW の起動だけで 1–3 分かかるので、必ずバックグラウンドで回すこと。
+ssw_batch は `.run` で実行する = メインプログラム扱いなので、
+**`.pro` の末尾に `exit` と `end` の両方が必須**
+（`end` が無いと "End of file encountered before end of program" で落ちる）。
+`.run` なので複数行の begin/endfor は普通に書ける。
+未定義のシステム変数（例: CHIANTI 未ロードでの `!xuvtop`）は
+**コンパイルエラー**になるので、必要な instrument を `SSW_INSTR` に入れておくこと。
 
 Python (eispac) だけでは解決できず、SSW が要る項目。
-**目的は「IDL に移行すること」ではなく、小さな検証結果を持ち帰ること。**
-講習会の本線は Python/Colab のまま変えない。
+**2026-08-06 に 1〜4 をすべて実施した。結果は `docs/00_log.md`。**
 
-優先度順:
+1. **`eis_auto_fit` と eispac のフィット結果を突き合わせる** … ✅ **完了**
+   → **22 輝線すべてで一致した**（小数第 2 位まで）。median 0.887。
+     未解決だった Fe XVI 0.62 / S XIII 0.72 / Si VII 0.39 は
+     **eispac 固有ではなく実データにそう出ている**ことが確定。
+   → 成果物: `work/idl_intensities_tied.csv`, `work/idl_intensities_box246.csv`
 
-1. **`eis_auto_fit` と eispac のフィット結果を突き合わせる** ← 最優先
-   未解決の食い違い（Fe XVI 262.984 が 0.62、S XIII 256.686 が 0.71、
-   Si VII 275.368 が 0.39）が eispac 固有なのか実在するのかを決める。
-   同じ箱 y=[244:274], x=[32:40] で同じ 22 輝線を出して比較する。
-   → 持ち帰るもの: 輝線ごとの強度の表（小さな CSV）
+2. **打ち上げ後の EIS 較正カーブを作る** … ✅ **完了**
+   `scripts/idl/11_calcurve.pro` → `work/eis_calcurve_20110702.txt`
+   （波長, NRL(Warren+2014) 倍率, Del Zanna(2013) 倍率。SW 170-212 / LW 246-291）
+   → **ただし食い違いの原因ではなかった**。どちらの較正を仮定しても
+     観測された ratio のパターンと整合しない。
 
-2. **打ち上げ後の EIS 較正カーブを作る**
-   eispac は**打ち上げ前較正しか持っていない**（`radcal/<win>_pre` のみ。
-   Del Zanna 2013 / Warren et al. 2014 の実装は無い）。
-   SSW の `eis_recalibrate_intensity.pro` で較正曲線を出し、
-   波長ごとの配列として保存する。
-   → 持ち帰るもの: 較正カーブの .npz（eispac の `read_cube(radcal=...)` に渡せる）
-   ※ ただし今回の食い違いは SW/LW で系統差が無いので、
-      較正が主犯である可能性は低い（docs/00_log.md の訂正を参照）。
-      それでも講習会モジュール 9 の教材として価値がある。
+3. **Ca XVII 192.858 のブレンド分離を SSW でやる** … ✅ **完了**
+   `scripts/idl/08_fit_ca.pro`（Ko et al. 2009 相当）→ **4.99 → 0.767**。
+   原子データは `scripts/idl/05b_ca17_ratios.pro` で CHIANTI 9.0.1 から取得:
+   O V 多重線の分岐比、Fe XI 192.813/188.216 = 0.20896（エネルギー比）。
+   → eispac 用の自作テンプレートを検証する「正解値」ができた。
 
-3. **Ca XVII 192.858 のブレンド分離を SSW でやる**
-   eispac にはこのブレンドを解くテンプレートが無い（論文値の 4.75 倍が出る）。
-   Ko et al. (2009) の方法を SSW で実行し、正解を作る。
-   → 持ち帰るもの: 正しい Ca XVII 強度。自作 Python テンプレートの検証に使う
+4. **PINTofALE の MCMC_DEM** … ✅ **完了**
+   自前ダウンロードの 2015 年版が IDL 9.2 でそのまま動く（依存 29 本が 29/29 通る）。
+   `scripts/idl/13_mcmc_dem.pro` で DEM を計算。
+   → **論文 Table 2 の R 列のパターンまで再現**（Fe XIII だけ大きく外れ、
+     Ar XIV / Ca XIV / Ca XV が揃って 1.3-1.5）。
+   → EM ピーク **logT 6.60 = 3.98 MK**（論文「4 MK 付近」）、α = 3.2-3.5（論文 2.9）。
+   ※ SSW 同梱の `/opt/ssw/packages/poa` は `fitting/` のパーミッションが
+     `drwxr--r--` で入れず、しかも 2004 年版。**使えない。**
+     `/scr/a000/c0234hotta/PINTofALE`（2015 年版）を使うこと。
 
-4. **PINTofALE の MCMC_DEM（入手できれば）**
-   PINTofALE は SSW には含まれない。v2.97 (2016) で、公式サイトの
-   ダウンロードは廃止され、著者に連絡して MEGA の共有リンクをもらう必要がある。
-   入手できたら論文と同じ手法の DEM を 1 つ作る。
-   → 持ち帰るもの: 参照 DEM。Python 側 (demregpy) の結果を較正できる
-   ※ IDL があれば GDL の互換性問題は全部回避できる
+5. CHIANTI IDL で寄与関数を出し、fiasco の結果と突き合わせる … 未実施
+   （CHIANTI 側は `scripts/idl/09_gofnt.pro` で出せている。fiasco との比較が残り）
 
-5. CHIANTI IDL で寄与関数を出し、fiasco の結果と突き合わせる（余力があれば）
+### 追加でできたこと（当初の★リストに無かったもの）
+
+- **AIA 94 Å の Fe XVIII 専用応答関数**を作った（論文 p.6 が要求するもの）。
+  `scripts/idl/15_aia94_fe18_resp.pro` + `scripts/aia94_fe18_response.py`。
+  R(T) ピーク 2.73e-27 DN cm^5 s^-1 pix^-1 at logT 6.90。
+- **論文が書いていない inter-moss 箱の座標を Figure 1-3 から復元**（15 領域ぶん）。
+  `scripts/extract_paper_boxes.py`。region 13 だけ箱が 2 つ出るなど、
+  論文の記述と一致することで正しさを確認済み。
+- **AIA Fe XVIII で箱を独立に検証**（`scripts/check_fe18_box.py`）。
+  JSOC の synoptic アーカイブ（登録不要、1 枚 1 MB）を使う。
+  → EIS 0.89 と AIA 0.93 が揃って低い = 装置でも処理でもなく箱の位置の差。
 
 ## 環境（2026-08-06 時点で確認済み）
 
 - Python: `/home/sc/c0234hotta/miniforge3/bin/python` (3.12.13, miniforge base)
   - 導入済み: numpy 2.5.1, scipy 1.18.0, astropy 8.0.1, sunpy 8.0.0, matplotlib 3.11.1, h5py 3.16.0
   - **未導入**: eispac, ndcube, aiapy, demregpy, ChiantiPy → 講習会用の専用 conda env を作る想定
-- IDL / SolarSoft: **この計算機には無い**（`idl`, `gdl` ともに不在, `$SSW` 未設定）
+- IDL / SolarSoft: **ある**（2026-08-06 に判明。以前の「無い」は誤り）
+  - IDL 9.2.0 `/usr/local/nv5/idl92`（名古屋大学ライセンス、`/usr/local/bin/idl`）
+  - SSW `/opt/ssw`、SSWDB `/opt/sswdb`。`$SSW` は未設定なので自分で export する
+  - `scripts/idl/run_sswidl.sh` がラッパ
 - ネットワーク: 外部アクセス可
   - EIS Level-1 HDF5 アーカイブ (NRL) : https://eis.nrl.navy.mil/level1/hdf5/YYYY/MM/DD/ → 200 OK
   - JSOC (AIA/HMI) : http://jsoc.stanford.edu → 200 OK
