@@ -7,6 +7,25 @@
 なぜそうするのかを説明できる**状態になること。
 実装の詳細は `docs/00_log.md` と各スクリプトにあるので、ここでは物理を扱う。
 
+## 図（すべて実データ・実計算から作ったもの。生成スクリプトつき）
+
+| 図 | 何を示すか | 生成 |
+|---|---|---|
+| `figures/ioneq_ladder.png` | コロナの電離平衡。**なぜ輝線が温度計になるか** | `scripts/plot_ioneq_ladder.py` |
+| `figures/emloci_region7.png` | EM loci。**逆問題を解く前に答えの見当をつける** | `scripts/plot_emloci.py` |
+| `figures/alpha_meaning.png` | **傾き α の意味と信頼度** | `scripts/plot_alpha_meaning.py` |
+| `figures/dem_compare.png` | MCMC vs 正則化。**手法依存性** | `scripts/plot_dem_compare.py` |
+
+## 実際に測った数値（この文書の主張の根拠）
+
+| 量 | 値 | 出典 |
+|---|---|---|
+| 応答行列の条件数 | **2.2×10⁶** | 22 輝線 × 17 温度ビン |
+| 実質的な自由度 | **12**（22 本あるのに） | 特異値が最大の 1/1000 以上の本数 |
+| EM ピーク | **log T 6.60 = 3.98 MK** | MCMC（論文「4 MK 付近」） |
+| 傾き α | **2.30**（論文 2.9、ナノフレア上限 2.3） | MCMC |
+| 総 EM | 4.17×10²⁷ cm⁻⁵ → 視線長 50 Mm | ビンに依らない量 |
+
 ---
 
 ## 0. 全体像を 1 枚で

@@ -5,6 +5,11 @@ data/
 # 「正しく動いたときの見本」としてリポジトリに入れる
 figures/*
 !figures/reference/
+# 講習会の教材として使う図は、生成スクリプトとセットで入れる
+!figures/ioneq_ladder.png
+!figures/emloci_region7.png
+!figures/alpha_meaning.png
+!figures/dem_compare.png
 
 *.pyc
 __pycache__/
