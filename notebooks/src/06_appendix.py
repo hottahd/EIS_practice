@@ -17,6 +17,7 @@
 # | G | Ca XVII のブレンド分離 |
 # | H | 論文 Table 2 との全面照合 |
 # | I | 他の活動領域・15 領域の統計 |
+# | J | ラスターは同時刻の画像ではない |
 
 # %% [markdown]
 # ## 付録 A: 欠損値は NaN ではない
@@ -261,6 +262,40 @@
 # - Figure 9: 暖かい成分の EM と Φ_M は**逆相関**
 #
 # 自分が興味を持っている活動領域で同じ解析をしてみるのが、次の一歩です。
+
+# %% [markdown]
+# ## 付録 J: ラスターは同時刻の画像ではない
+#
+# スリットを 1 ステップずつ動かして作るので、**x 軸は空間であると同時に時間軸**です。
+# 今日の観測がどれだけ時間をかけているか、ヘッダから確かめられます。
+
+# %%
+import eispac
+
+from workshop import EIS_FILE
+from astropy.time import Time
+
+c = eispac.read_cube(EIS_FILE, 195.119)
+h = c.meta["index"]
+t0, t1 = Time(h["date_obs"]), Time(h["date_end"])
+total = (t1 - t0).to_value("s")
+
+print("観測プログラム :", h["stud_acr"], " (提案者:", h["st_auth"] + ")")
+print("開始 / 終了    :", h["date_obs"], "/", h["date_end"])
+print(f"所要時間       : {total/60:.1f} 分  ({h['nraster']} ステップ)")
+print(f"1 ステップ     : {total/h['nraster']:.0f} 秒")
+print(f"視野           : {h['fovx']:.0f}″ x {h['fovy']:.0f}″"
+      f"  （x は {h['fovx']/h['nraster']:.1f}″/step、スリット幅は {h['slit_id']}）")
+
+# %% [markdown]
+# **62 分かかっています。** 左端と右端では 1 時間離れています。
+#
+# - 時間変化する現象（フレア、ジェット）には使えない
+# - ドップラー速度のマップも、同時刻の速度場ではない
+# - 一方、定常的な構造を測るなら問題なく、むしろ S/N の面では有利
+#
+# **Solar-C EUVST はカデンス 1 秒**なので、この制約は大きく緩みます。
+# ただし「ラスターは掃いて作る」こと自体は変わりません。
 
 # %% [markdown]
 # ---
