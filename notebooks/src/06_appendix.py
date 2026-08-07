@@ -19,6 +19,7 @@
 # | I | 他の活動領域・15 領域の統計 |
 # | J | ラスターは同時刻の画像ではない |
 # | **K** | **eispac の使い方（早見表）** |
+# | **L** | **1 本の輝線を 2 成分でフィットする（速度成分の分離）** |
 
 # %% [markdown]
 # ## 付録 A: 欠損値は NaN ではない
@@ -727,6 +728,98 @@ print("\n観測に合うものを探すには eispac.match_templates(eis_obs)")
 # | 波長のゼロ点 | 絶対基準が無い。自分で決める（第 3 章） |
 # | 実行時間 | 全ラスター 1 輝線で数分。`ncpu` を上げるか範囲を絞る |
 # | 警告の量 | `ignore_warnings=True` を付けないと画素ごとに出て読めなくなる |
+
+# %% [markdown]
+# ## 付録 L: 1 本の輝線を 2 成分でフィットする（速度成分の分離）
+#
+# **視線上に速度の違うプラズマが重なっていれば、1 本の輝線でも
+# ガウシアン 1 つでは足りません。** 活動領域の縁で見つかる outflow の
+# 青翼非対称（Hara et al. 2008 など）が代表例です。
+#
+# ### 同梱テンプレートにあるか → 実質ありません
+#
+# 119 個のうち、同じ輝線のラベルを 2 つ持つのは `fe_13_203_165.3c` だけですが、
+# 初期値が 0.08 Å（120 km/s 相当）離れており、
+# **速度成分の分離ではなく、近接した別々の遷移**を 2 本で表したものです。
+#
+# ### 自分で作れます
+#
+# `parinfo` を組み立てて `EISFitTemplate` に渡せば、eispac はそのまま解きます。
+# 1 成分テンプレートを 2 成分に増やす例:
+
+# %%
+import copy
+import numpy as np
+import eispac
+
+from workshop import BOX, EIS_FILE
+from fit_box_spectra import average_spectrum
+
+C_KMS, LAM = 2.998e5, 202.044        # Fe XIII 202.044（ブレンドの少ない線）
+wave, inten, sig, _ = average_spectrum(EIS_FILE, LAM, **BOX)
+
+base = eispac.read_template(
+    eispac.data.get_fit_template_filepath("fe_13_202_044.1c.template.h5"))
+fit1 = eispac.fit_spectra(inten, base, wave=wave, errs=sig, ncpu=1,
+                          ignore_warnings=True)
+
+# --- 同じ輝線を 2 成分に増やす
+tmpl = copy.deepcopy(base.template)
+tmpl["n_gauss"] = 2
+tmpl["line_ids"] = np.array([f"Fe XIII {LAM}", f"Fe XIII {LAM}"])
+
+g = base.parinfo                      # [振幅, 中心, 幅, 背景]
+pi = [copy.deepcopy(g[i]) for i in (0, 1, 2, 0, 1, 2, 3)]
+p1 = np.atleast_1d(fit1.fit["params"]).ravel()
+pi[3]["value"] = p1[0] * 0.3          # 副成分は小さめの初期値
+pi[4]["value"] = LAM - 0.03           # 青側にずらして置く
+pi[4]["limits"] = np.array([LAM - 0.12, LAM + 0.12])
+pi[4]["limited"] = np.array([1, 1])
+pi[5]["tied"] = "p[2]"                # ★ 幅は主成分と共有して縮退を抑える
+
+two = eispac.EISFitTemplate(template=tmpl, parinfo=pi)
+fit2 = eispac.fit_spectra(inten, two, wave=wave, errs=sig, ncpu=1,
+                          ignore_warnings=True)
+
+c1 = float(np.atleast_1d(fit1.fit["chi2"]).ravel()[0])
+c2 = float(np.atleast_1d(fit2.fit["chi2"]).ravel()[0])
+p2 = np.atleast_1d(fit2.fit["params"]).ravel()
+print(f"1 成分: chi2 = {c1:6.1f}   λ={p1[1]:.4f} ({C_KMS*(p1[1]-LAM)/LAM:+5.1f} km/s)")
+print(f"2 成分: chi2 = {c2:6.1f}")
+print(f"   主 : {C_KMS*(p2[1]-LAM)/LAM:+7.1f} km/s  振幅 {p2[0]:8.0f}")
+print(f"   副 : {C_KMS*(p2[4]-LAM)/LAM:+7.1f} km/s  振幅 {p2[3]:8.0f}"
+      f"  （主の {100*p2[3]/p2[0]:.1f}%）")
+
+# %% [markdown]
+# ### 結果の読み方
+#
+# **この場所では 2 成分にしても良くなりません。** 副成分は振幅がほぼ 0 で
+# 端に張り付き、χ² もむしろ悪化します（自由度が増えても、mpfit が
+# 初期値に引きずられて局所解に落ちるため）。
+#
+# **それが正しい答えです。** 箱の中で平均した対称なプロファイルには、
+# 分離すべき第 2 の速度成分が無いのですから。
+#
+# 逆に言えば、**2 成分にすれば必ず良くなるわけではありません**。
+# 「合わないから成分を増やす」は危険で、増やすなら
+# **物理的な根拠**（青翼が明らかに膨らんでいる、など）が要ります。
+#
+# ### 実務上の注意
+#
+# | | |
+# |---|---|
+# | **縮退** | 2 つのガウシアンは位置・幅・振幅で簡単に入れ替わる。**幅を共有する**（`tied="p[2]"`）などの拘束がほぼ必須 |
+# | **分解できる速度差** | 線幅は σ ≈ 0.028 Å ≈ **42 km/s**。これより小さい差は原理的に分離できない |
+# | **S/N** | 1 画素では無理。空間平均するか、明るい場所に限る |
+# | **初期値** | 副成分をどちら側に置くかで答えが変わる。青側・赤側の両方を試す |
+# | **先にスクリーニング** | 全画素で 2 成分を回す前に、**赤翼と青翼の差（RB 非対称度）**で候補を絞るのが定石 |
+#
+# ### ブレンドがある線では話が別
+#
+# Fe XII 195.119 で同じことをすると χ² は 459 → 827 と**大きく悪化**します。
+# 195.179 Å に実在する別の輝線を、テンプレートが正しく置いていたのに、
+# それを「速度成分」に置き換えてしまうからです。
+# **モデルを物理に合わせる**のが先で、成分の数はその結果です。
 
 # %% [markdown]
 # ---
