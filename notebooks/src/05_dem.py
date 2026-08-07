@@ -240,29 +240,12 @@ plt.show()
 # plt.plot(lt, em2, "s-", label="without Ca")
 # plt.yscale("log"); plt.legend(); plt.show()
 
-# %%
-#@title 演習 1 の答え（左の ▶ を押すと開きます）
-sel2 = sel.copy()
-for bad in ["Ca XIV", "Ca XV", "Ca XVI"]:
-    sel2[[i for i, n in enumerate(names) if n == bad]] = False
 
-dem2, _, _, chi2_2, _ = dn2dem(iobs[sel2], 0.22 * iobs[sel2],
-                               (Gk[sel2] / (4 * np.pi)).T, lt, tedges,
-                               max_iter=30, warn=False)
-em2 = np.atleast_1d(np.squeeze(dem2)) * T * np.log(10) * dlt
-
-plt.figure(figsize=(7.5, 5))
-plt.plot(lt, em, "o-", lw=2, ms=4, label=f"all lines ({int(sel.sum())})")
-plt.plot(lt, em2, "s--", lw=2, ms=4, label=f"without Ca ({int(sel2.sum())})")
-plt.yscale("log"); plt.xlim(5.6, 7.1); plt.ylim(1e24, 1e28)
-plt.xlabel("log T [K]"); plt.ylabel(r"EM per bin [cm$^{-5}$]")
-plt.legend(); plt.grid(alpha=0.3); plt.tight_layout(); plt.show()
-
-print(f"全輝線     : ピーク logT {lt[int(np.nanargmax(em))]:.2f}"
-      f"  ({10**lt[int(np.nanargmax(em))]/1e6:.1f} MK)")
-print(f"Ca を除く  : ピーク logT {lt[int(np.nanargmax(em2))]:.2f}"
-      f"  ({10**lt[int(np.nanargmax(em2))]/1e6:.1f} MK)")
-print("→ 高温側を拘束する輝線を失うと、その温度域は決まらなくなる")
+# %% [markdown]
+# **答えは別のノートにあります** →
+# [演習の答え](https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/EIS_workshop_answers.ipynb)
+#
+# 実行結果も入れてあるので、開くだけで確認できます（走らせる必要はありません）。
 
 # %% [markdown]
 # ## 今日のまとめ

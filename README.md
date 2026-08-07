@@ -19,6 +19,8 @@ Python のみ（IDL / SolarSoft 不要）。**Google Colab で完結**します�
 
 ### → [Colab で開く](https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/EIS_workshop.ipynb)
 
+演習の答えは[こちら](https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/EIS_workshop_answers.ipynb)（実行結果つき。開くだけで読めます）。
+
 **5 章が 1 冊に入っています。** 上から順に実行してください（約 2 時間 45 分）。
 
 | 章 | 内容 |

@@ -169,22 +169,12 @@ print(f"\n相関係数 (log I, ξ) = {np.corrcoef(np.log10(inten[good]), xi[good
 #            extent=ext, cmap="coolwarm", vmin=-10, vmax=10)
 # plt.colorbar(label="km/s"); plt.show()
 
-# %%
-#@title 演習 1 の答え（左の ▶ を押すと開きます）
-xi_const = nonthermal_velocity(sig_obs, sig_inst.mean(), sig_th)
-diff = xi - xi_const
 
-plt.figure(figsize=(4.5, 7))
-plt.imshow(np.where(bright, diff, np.nan), origin="lower", aspect="auto",
-           extent=ext, cmap="coolwarm", vmin=-10, vmax=10)
-plt.colorbar(label="km/s")
-plt.title("position-dependent minus constant")
-plt.xlabel("x [pix]"); plt.ylabel("y [pix]")
-plt.tight_layout()
-plt.show()
-
-print(f"差の範囲: {np.nanmin(diff[bright]):+.1f} 〜 {np.nanmax(diff[bright]):+.1f} km/s")
-print("→ y 方向に系統的なパターンが出る。装置幅の y 依存がそのまま乗っている")
+# %% [markdown]
+# **答えは別のノートにあります** →
+# [演習の答え](https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/EIS_workshop_answers.ipynb)
+#
+# 実行結果も入れてあるので、開くだけで確認できます（走らせる必要はありません）。
 
 # %% [markdown]
 # ## まとめ

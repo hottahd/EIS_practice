@@ -1,10 +1,13 @@
 # 講習会ノートブック
 
-**配るのは `EIS_workshop.ipynb` の 1 冊だけです。** 本編 5 章＋付録が入っています。
+**配るのは `EIS_workshop.ipynb`。** 本編 5 章＋付録が入っています。
+**演習の答えは別ノート** `EIS_workshop_answers.ipynb` にあります
+（本編に置くと見えてしまうため）。
 
 受講者は **GitHub の URL を Colab に食わせるだけ**で開けます（アップロード不要）:
 
-### → [Colab で開く](https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/EIS_workshop.ipynb)
+### → [Colab で開く（本編）](https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/EIS_workshop.ipynb)
+### → [演習の答え](https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/EIS_workshop_answers.ipynb)
 
 ```
 https://colab.research.google.com/github/hottahd/EIS_practice/blob/main/notebooks/EIS_workshop.ipynb
@@ -45,9 +48,25 @@ GitHub から開いたノートは**読み取り専用の一時セッション**
 
 ## 編集する人向け
 
+### 答えノートは「実行結果を埋め込んで」配る
+
+Colab はノート 1 冊ごとに VM が変わるので、答えを見るためだけに
+データを取り直すのは無駄。そこで**出力を埋め込んだ状態でコミット**する。
+受講者は**開くだけで答えと結果が読めます**（走らせる必要がない）。
+
+```bash
+python notebooks/build_notebooks.py   # answers/*.py -> EIS_workshop_answers.ipynb
+python notebooks/run_answers.py       # 実行して出力を埋め込む（約 3 分）
+```
+
+`run_answers.py` は Colab 専用セル（`!pip`）を実行せず、
+フィッターの進捗ログなどのノイズを落としてから保存する。
+**答えが壊れていればここで落ちる**ので、これが答えの検証も兼ねる。
+
 ### `.ipynb` を手で書かない
 
-ソースは**章ごとに** `src/NN_*.py` に `# %%` 区切りの素の Python で書き、
+ソースは**章ごとに** `src/NN_*.py`（答えは `answers/*.py`）に
+`# %%` 区切りの素の Python で書き、
 
 ```bash
 python notebooks/build_notebooks.py     # src/*.py -> EIS_workshop.ipynb（1 冊）

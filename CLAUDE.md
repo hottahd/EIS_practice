@@ -74,6 +74,10 @@ EIS 94 MB の取得を冊数ぶん繰り返すことになる。半日/1 日コ�
 | 5 | 温度分布 DEM（EM loci → 1 回解く。ピーク 4.0 MK） | ✅ |
 | 付録 | A 欠損値 / B 誤差 / C DEM の信頼度 / D 1/(4π) / E 較正 /<br>F AIA Fe XVIII / G Ca XVII / H Table 2 全面照合 / I 他領域 | ✅ |
 
+**演習の答えは別ノート** `notebooks/EIS_workshop_answers.ipynb`（ソースは `notebooks/answers/`）。
+本編に置くと見えてしまうため。**実行結果を埋め込んでコミットする**ので、
+受講者は開くだけで読める（`python notebooks/run_answers.py`）。
+
 **採否の基準は「楽しいか」。** 重要だが楽しくないものは**付録**に回し、
 正しさは**コード側で担保**して本編にはポインタだけ置く。
 「私が苦労したから」は入れない。**壊してから直す演出もしない**（`docs/05_teaching_design.md`）。

@@ -223,12 +223,47 @@ def build_combined(paths, name="EIS_workshop"):
     return out, len(cells)
 
 
+ANSWERS = HERE / "answers"
+
+
+def build_answers():
+    """演習の答えを別のノートにする（本編には答えを置かない）。
+
+    ★ 答えノートは **実行結果を埋め込んだ状態**で配る。
+      `python notebooks/run_answers.py` で実行して出力を入れる。
+      Colab で開くだけで答えと結果が読めるので、VM を立ち上げ直さずに済む。
+    """
+    if not ANSWERS.is_dir():
+        return None, 0
+    cells = []
+    for p in sorted(ANSWERS.glob("*.py")):
+        cells += parse(p)
+    out = HERE / "EIS_workshop_answers.ipynb"
+    # 既に実行結果が入っていれば、それを残したまま中身だけ差し替える
+    old = {}
+    if out.exists():
+        try:
+            prev = json.loads(out.read_text())
+            old = {c["source"]: c for c in prev["cells"] if c["cell_type"] == "code"}
+        except Exception:
+            pass
+    for c in cells:
+        if c["cell_type"] == "code" and c["source"] in old:
+            c["outputs"] = old[c["source"]].get("outputs", [])
+            c["execution_count"] = old[c["source"]].get("execution_count")
+    out.write_text(json.dumps(notebook(cells), ensure_ascii=False, indent=1))
+    return out, len(cells)
+
+
 def main():
     if not SRC.is_dir():
         sys.exit(f"{SRC} が無い")
     paths = sorted(SRC.glob("*.py"))
     out, n = build_combined(paths)
-    print(f"{len(paths)} モジュール -> {out.name}  ({n} cells)")
+    print(f"{len(paths)} 章 -> {out.name}  ({n} cells)")
+    out_a, n_a = build_answers()
+    if out_a:
+        print(f"答え      -> {out_a.name}  ({n_a} cells)")
 
 
 if __name__ == "__main__":
