@@ -1,5 +1,5 @@
 # %% [markdown]
-# # 第 4 章: 線幅から乱れを測る
+# # 第 4 章: 線幅から非熱的速度を出す
 #
 # **30 分**
 #
@@ -125,11 +125,11 @@ fig.tight_layout()
 plt.show()
 
 # %% [markdown]
-# 明るさとの関係を数字で見ます。
+# 輻射強度との関係を数字で見ます。
 
 # %%
 q20, q80 = np.nanpercentile(inten, [20, 80])
-print("強度で 3 分割したときの非熱的速度 [km/s]")
+print("輻射強度で 3 分割したときの非熱的速度 [km/s]")
 for name, m in [("暗い 20%", inten < q20),
                 ("中間", (inten >= q20) & (inten < q80)),
                 ("明るい 20%", inten >= q80)]:
