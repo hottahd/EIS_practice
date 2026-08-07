@@ -18,6 +18,7 @@
 # | H | 論文 Table 2 との全面照合 |
 # | I | 他の活動領域・15 領域の統計 |
 # | J | ラスターは同時刻の画像ではない |
+# | **K** | **eispac の使い方（早見表）** |
 
 # %% [markdown]
 # ## 付録 A: 欠損値は NaN ではない
@@ -296,6 +297,178 @@ print(f"視野           : {h['fovx']:.0f}″ x {h['fovy']:.0f}″"
 #
 # **Solar-C EUVST はカデンス 1 秒**なので、この制約は大きく緩みます。
 # ただし「ラスターは掃いて作る」こと自体は変わりません。
+
+# %% [markdown]
+# <a id="eispac"></a>
+# ## 付録 K: eispac の使い方（早見表）
+#
+# 演習で手が止まったときの参照用です。ここに出てくるものだけ知っていれば、
+# 今日の内容はひととおり書けます。
+#
+# 公式ドキュメント: https://eispac.readthedocs.io/
+# （`eispac` は NRL が開発している EIS 用の Python パッケージです）
+
+# %% [markdown]
+# ### 1. データを取る
+#
+# ```python
+# from eispac.download import download_hdf5_data
+# download_hdf5_data(filename="eis_20110702_030712", local_top="data/eis")
+# ```
+#
+# この教材では `workshop.ensure_eis()` が同じことをしています
+# （NRL のアーカイブから直接取得。ユーザ登録は不要）。
+#
+# 観測を探すときは `eispac.download.run_eis_catalog`（GUI）か、
+# NRL のアーカイブを直接見るのが早いです。
+
+# %% [markdown]
+# ### 2. 何が入っているか見る
+#
+# ```python
+# wininfo = eispac.read_wininfo("..._head.h5")   # スペクトルウィンドウの一覧
+# ```
+#
+# EIS は全波長を降ろせないので、**必要な輝線の周りだけ**を切り出して観測します。
+# 使いたい輝線が入っているかは、まずこれで確認します。
+
+# %%
+import eispac
+import numpy as np
+
+from workshop import EIS_FILE
+
+wi = eispac.read_wininfo(EIS_FILE.replace(".data.h5", ".head.h5"))
+print(f"{len(wi)} ウィンドウ。最初の 3 つ:")
+for w in wi[:3]:
+    print(f"  {w['iwin']:2d} {str(w['line_id']):<20} {w['wvl_min']:.3f} – {w['wvl_max']:.3f} Å")
+
+# %% [markdown]
+# ### 3. 読む
+#
+# ```python
+# cube = eispac.read_cube(datafile, 195.119)   # その波長を含むウィンドウを丸ごと
+# ```
+#
+# 返ってくる `EISCube` の中身:
+#
+# | | |
+# |---|---|
+# | `cube.data` | (y, x, 波長) の配列。**波長 1 Å あたり**の値（付録 D） |
+# | `cube.wavelength` | 同じ形の波長配列。**軌道変動とスリット傾きは補正済み** |
+# | `cube.uncertainty.array` | 誤差 |
+# | `cube.mask` | True = 使ってはいけないサンプル（付録 A） |
+# | `cube.meta` | ヘッダ類（下記） |
+#
+# `cube.meta` でよく使うもの:
+#
+# | キー | 中身 |
+# |---|---|
+# | `index` | FITS ヘッダ相当（`date_obs`, `nraster`, `fovx`, `stud_acr` …） |
+# | `pointing` | `xcen`, `ycen`, `x_scale`, `y_scale` |
+# | `extent_arcsec` | `[x0, x1, y0, y1]`。`imshow(extent=...)` にそのまま渡せる |
+# | `wave_corr` | 波長補正（適用済み。第 3 章） |
+# | `slit_width` | 波長分解能 FWHM [Å]、スリット位置ごと（第 4 章） |
+# | `duration` | 露出時間 [s]、ステップごと |
+
+# %%
+cube = eispac.read_cube(EIS_FILE, 195.119)
+print("data      :", cube.data.shape, cube.unit)
+print("meta のキー:", ", ".join(list(cube.meta.keys())[:8]), "...")
+print("index のキー数:", len(cube.meta["index"]))
+
+# %% [markdown]
+# ### 4. テンプレートを選ぶ
+#
+# ```python
+# path  = eispac.data.get_fit_template_filepath("fe_12_195_119.2c.template.h5")
+# tmplt = eispac.read_template(path)
+# ```
+#
+# - `.2c` は 2 成分、`.1c` は 1 成分（`.3c` もあります）
+# - `tmplt.template["line_ids"]` … **どの成分が何の輝線か。必ず確認する**
+# - `tmplt.parinfo` … 初期値・範囲・`tied`（他のパラメータに縛る）
+# - `tmplt.central_wave` … `read_cube` に渡す波長
+#
+# テンプレートは 119 個同梱されています。名前の一覧は次のとおり。
+
+# %%
+names = eispac.data.fit_template_filenames()
+print(f"同梱テンプレート {len(names)} 個。Fe XII のもの:")
+for n in sorted(str(x).split("/")[-1] for x in names):
+    if n.startswith("fe_12"):
+        print("  ", n)
+
+# %% [markdown]
+# 観測データに合うテンプレートを探すこともできます:
+#
+# ```python
+# eispac.match_templates(eis_obs)      # ウィンドウに対応するテンプレートを返す
+# ```
+
+# %% [markdown]
+# ### 5. フィットする
+#
+# ```python
+# fit = eispac.fit_spectra(cube, tmplt, ncpu=2, ignore_warnings=True)   # 全画素
+# fit = eispac.fit_spectra(cube[180:340, :, :], tmplt, ncpu=2)          # 一部だけ
+# fit = eispac.fit_spectra(inten, tmplt, wave=wave, errs=sig, ncpu=1)   # 1 本だけ
+# ```
+#
+# 結果 `EISFitResult` の中身（`fit.fit[...]`）:
+#
+# | キー | 中身 |
+# |---|---|
+# | `int` / `err_int` | **輻射強度**とその誤差（成分ごと） |
+# | `params` / `perror` | 生のパラメータ。`[振幅, 中心, 幅] × 成分数 + 背景` |
+# | `chi2` | フィットの χ² |
+# | `line_ids` | 成分の並び |
+#
+# 使いやすい形で取り出す:
+#
+# ```python
+# m = fit.get_map(component=0, measurement="intensity")   # sunpy Map
+# m = fit.get_map(component=0, measurement="velocity")    # ドップラー速度
+# wave, prof = fit.get_fit_profile()                      # モデル曲線
+# ```
+
+# %% [markdown]
+# ### 6. 速度に直す
+#
+# ```python
+# from eispac.instr import calc_velocity
+# v = calc_velocity(fit.fit["params"][..., 1], 195.119, corr_method="column")
+# ```
+#
+# `corr_method` は**ゼロ点の決め方**です（第 3 章）:
+#
+# | 値 | 意味 |
+# |---|---|
+# | `"column"` | 列（露光）ごとの中央値を 0 |
+# | `"image"` | 視野全体の中央値を 0 |
+# | `None` | 何もしない（静止波長そのまま） |
+
+# %% [markdown]
+# ### 7. 保存する
+#
+# ```python
+# eispac.save_fit(fit, save_dir="work")     # HDF5 で保存
+# fit = eispac.read_fit("work/..._fit.h5")  # 読み戻す
+# eispac.export_fits(fit, save_dir="work")  # FITS で書き出す
+# ```
+#
+# 全ラスターのフィットは時間がかかるので、**結果は保存しておくのが実用的**です。
+
+# %% [markdown]
+# ### つまずきやすいところ
+#
+# | | |
+# |---|---|
+# | 成分の取り違え | `line_ids` を見ずに `component=0` とすると別のイオンが返る（第 2 章） |
+# | 欠損値 | NaN ではなく大きな負の値。`cube.mask` で落とす（付録 A） |
+# | 単位 | `cube.data` は Å⁻¹ あたり。波長刻みを掛けて輻射強度（付録 D） |
+# | 波長のゼロ点 | 絶対基準が無い。自分で決める（第 3 章） |
+# | 実行時間 | 全ラスター 1 輝線で数分。`ncpu` を上げるか、範囲を絞る |
 
 # %% [markdown]
 # ---
