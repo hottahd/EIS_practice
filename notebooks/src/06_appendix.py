@@ -820,6 +820,24 @@ print(f"   副 : {C_KMS*(p2[4]-LAM)/LAM:+7.1f} km/s  振幅 {p2[3]:8.0f}"
 # 195.179 Å に実在する別の輝線を、テンプレートが正しく置いていたのに、
 # それを「速度成分」に置き換えてしまうからです。
 # **モデルを物理に合わせる**のが先で、成分の数はその結果です。
+#
+# ### 参考文献
+#
+# - **Hara et al. 2008, ApJ 678, L67**
+#   *"Coronal Plasma Motions near Footpoints of Active Region Loops Revealed
+#   from Spectroscopic Observations with Hinode EIS"*
+#   https://doi.org/10.1086/588252
+#   活動領域の 2–3 MK の線（Fe XIV, Fe XV）で**単一ガウシアンからのずれ（青翼の超過）**
+#   を見つけた最初の研究。ここから多成分フィットの議論が始まりました。
+# - **Bryans, Young & Doschek 2010, ApJ 715, 1012**
+#   *"Multiple Component Outflows in an Active Region Observed with the
+#   EUV Imaging Spectrometer on Hinode"*
+#   https://arxiv.org/abs/1004.5085
+#   実際に**複数成分で解いた**例。
+#
+# **Solar-C EUVST では 0.4″・1 秒**なので、いま「非熱的幅」や「非対称」として
+# 見えているものの一部は、**分解できる別々の速度成分**に変わるはずです。
+# その切り分けが EUVST の仕事のひとつになります。
 
 # %% [markdown]
 # ---
