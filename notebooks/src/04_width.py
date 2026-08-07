@@ -46,14 +46,15 @@ print(f"観測された σ: 中央値 {np.nanmedian(sig_obs):.4f} Å")
 # %% [markdown]
 # ## 4-2. 装置幅はスリット上の位置で変わる
 #
-# EIS の装置幅は `cube.meta['slit_width']` に入っている（**FWHM**、単位 Å）。
-# **スリットに沿って一定ではない。**
+# 第 1 章で見た「山の幅はほぼ装置で決まっている」の中身がこれです。
+# EIS の**波長分解能**は `cube.meta['slit_width']` に入っています（**FWHM**、単位 Å）。
+# **スリットに沿って一定ではありません。**
 
 # %%
 fwhm_inst = np.asarray(cube.meta["slit_width"], float)[Y0:Y1]
 sig_inst = fwhm_inst / (2 * np.sqrt(2 * np.log(2)))      # FWHM → σ
 
-print(f"装置幅 FWHM: {fwhm_inst.min():.4f} – {fwhm_inst.max():.4f} Å "
+print(f"波長分解能 FWHM: {fwhm_inst.min():.4f} – {fwhm_inst.max():.4f} Å "
       f"（この範囲で {100*(fwhm_inst.max()/fwhm_inst.min()-1):.0f}% 変わる）")
 print(f"σ に直すと : {sig_inst.min():.4f} – {sig_inst.max():.4f} Å")
 print(f"観測の σ   : 中央値 {np.nanmedian(sig_obs):.4f} Å")
