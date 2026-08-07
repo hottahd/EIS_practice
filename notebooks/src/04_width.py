@@ -161,13 +161,30 @@ print(f"\n相関係数 (log I, ξ) = {np.corrcoef(np.log10(inten[good]), xi[good
 #    熱幅の寄与が大きくなるので、仮定の効き方も変わる。
 
 # %%
-# 演習 1（TODO を埋める）
+# 演習 1: ____ を埋めて実行してください（装置幅を定数で代用するとどうなるか）
 #
 # xi_const = nonthermal_velocity(sig_obs, ____, sig_th)
 # diff = xi - xi_const
 # plt.imshow(np.where(bright, diff, np.nan), origin="lower", aspect="auto",
 #            extent=ext, cmap="coolwarm", vmin=-10, vmax=10)
-# plt.colorbar(label="km/s"); plt.title("position-dependent minus constant"); plt.show()
+# plt.colorbar(label="km/s"); plt.show()
+
+# %%
+#@title 演習 1 の答え（左の ▶ を押すと開きます）
+xi_const = nonthermal_velocity(sig_obs, sig_inst.mean(), sig_th)
+diff = xi - xi_const
+
+plt.figure(figsize=(4.5, 7))
+plt.imshow(np.where(bright, diff, np.nan), origin="lower", aspect="auto",
+           extent=ext, cmap="coolwarm", vmin=-10, vmax=10)
+plt.colorbar(label="km/s")
+plt.title("position-dependent minus constant")
+plt.xlabel("x [pix]"); plt.ylabel("y [pix]")
+plt.tight_layout()
+plt.show()
+
+print(f"差の範囲: {np.nanmin(diff[bright]):+.1f} 〜 {np.nanmax(diff[bright]):+.1f} km/s")
+print("→ y 方向に系統的なパターンが出る。装置幅の y 依存がそのまま乗っている")
 
 # %% [markdown]
 # ## まとめ

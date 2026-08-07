@@ -207,6 +207,18 @@ def build_combined(paths, name="EIS_workshop"):
             cells.append(c)
 
     out = HERE / (name + ".ipynb")
+
+    # ★ .ipynb を直接編集していた場合の保険。
+    #   生成物がソースより新しければ、上書きする前に控えを取って警告する
+    #   （Colab や Jupyter で直接いじった内容を黙って消さないため）。
+    if out.exists():
+        newest_src = max(p.stat().st_mtime for p in paths)
+        if out.stat().st_mtime > newest_src + 1:
+            bak = out.with_suffix(".ipynb.bak")
+            bak.write_text(out.read_text())
+            print(f"  ! {out.name} がソースより新しい（直接編集された可能性）。"
+                  f"控えを {bak.name} に取って上書きします")
+
     out.write_text(json.dumps(notebook(cells), ensure_ascii=False, indent=1))
     return out, len(cells)
 

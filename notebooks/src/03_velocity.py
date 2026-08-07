@@ -191,13 +191,37 @@ for name, m in [("暗い 20%", inten < q20),
 #    暗いところで速度がどれくらい信用できないか確かめる。
 
 # %%
-# 演習 1 の書き出し（TODO を埋める）
+# 演習 1: ____ を埋めて実行してください（Fe XIII 202.044 の速度マップ）
 #
 # fit2, cube2 = fit_region(wvl=____, tmplt_name="____", y0=Y0, y1=Y1)
 # cen2 = fit2.fit["params"][..., ____]
 # v2 = calc_velocity(cen2, ____, corr_method="column")
 # plt.imshow(v2, origin="lower", aspect="auto", cmap="RdBu_r", vmin=-15, vmax=15)
 # plt.colorbar(label="km/s"); plt.show()
+
+# %%
+#@title 演習 1 の答え（左の ▶ を押すと開きます。実行に 1–2 分）
+fit2, cube2 = fit_region(wvl=202.044, tmplt_name="fe_13_202_044.1c.template.h5",
+                         y0=Y0, y1=Y1)
+cen2 = fit2.fit["params"][..., 1]
+v2 = calc_velocity(cen2, 202.044, corr_method="column")
+
+fig, axes = plt.subplots(1, 2, figsize=(9, 7))
+for ax, (d, t) in zip(axes, [(v_col, "Fe XII 195.119 (1.6 MK)"),
+                             (v2, "Fe XIII 202.044 (1.8 MK)")]):
+    im = ax.imshow(d, origin="lower", aspect="auto", extent=ext,
+                   cmap="RdBu_r", vmin=-15, vmax=15)
+    ax.set_title(t + "  velocity [km/s]", fontsize=10)
+    ax.set_xlabel("x [pix]")
+axes[0].set_ylabel("y [pix]")
+fig.colorbar(im, ax=axes, label="km/s")
+plt.show()
+
+print(f"Fe XII  : 中央値 {np.nanmedian(v_col):+.2f}  "
+      f"5–95% [{np.nanpercentile(v_col,5):+.1f}, {np.nanpercentile(v_col,95):+.1f}] km/s")
+print(f"Fe XIII : 中央値 {np.nanmedian(v2):+.2f}  "
+      f"5–95% [{np.nanpercentile(v2,5):+.1f}, {np.nanpercentile(v2,95):+.1f}] km/s")
+print("→ 温度が近い 2 本なので、速度の分布もよく似る")
 
 # %% [markdown]
 # ## まとめ

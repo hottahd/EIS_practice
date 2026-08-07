@@ -42,3 +42,6 @@ papers/**/*.pdf
 
 # pdftotext の出力（PDF から再生成できる）
 papers/refs/*.txt
+
+# build_notebooks.py が取る控え
+notebooks/*.ipynb.bak
