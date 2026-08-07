@@ -308,7 +308,59 @@ print(f"視野           : {h['fovx']:.0f}″ x {h['fovy']:.0f}″"
 # 公式ドキュメント: https://eispac.readthedocs.io/
 
 # %% [markdown]
-# ### 1. データを取る
+# ### 1. どんな観測があるか調べる
+#
+# **方法 1: sunpy の Fido で時刻から探す**（一番手軽）
+#
+# ```python
+# from sunpy.net import Fido, attrs as a
+# res = Fido.search(a.Time("2011-07-02 03:00", "2011-07-02 04:30"), a.Instrument("EIS"))
+# ```
+#
+# VSO を叩くので、いつ・どの波長帯で観測があったかが分かります。
+# ただし VSO から落ちてくるのは **level-0 の FITS** です。
+# この教材で使う **level-1 HDF5** は、同じ時刻のファイル名で NRL から取ります
+# （下の「取る」を参照）。
+#
+# **方法 2: NRL のアーカイブを日付でたどる**
+#
+#     https://eis.nrl.navy.mil/level1/hdf5/YYYY/MM/DD/
+#
+# その日の観測が一覧になっています。ファイル名は `eis_YYYYMMDD_HHMMSS`。
+#
+# **方法 3: 公式の as-run カタログ（SQLite）を落として GUI で探す**
+#
+# ```python
+# from eispac.download import download_db, run_eis_catalog
+# download_db()        # カタログ本体（数十 MB）
+# run_eis_catalog()    # GUI が立ち上がる
+# ```
+#
+# 観測プログラム名・視野・輝線などで絞り込めます。
+# **GUI なので Colab では使えません**（手元の PC 用）。
+#
+# **方法 4: 他のアーカイブの検索画面**
+#
+# - DARTS (JAXA): https://darts.isas.jaxa.jp/solar/hinode/
+# - MSSL: http://solar.ads.rl.ac.uk/MSSL-data/
+#
+# **★ 実務上のコツ**: 「どの輝線が使えるか」は**観測プログラム（study）で決まります**。
+# 論文で使われている study 名（この観測なら `HPW021_VEL_120x512v1`）を控えておき、
+# 同じ study の別の日を探すのが確実です。
+# 落としたあとに `read_wininfo` で中身を確認します（次項）。
+
+# %%
+# Fido で探してみる（ネットワークが使えないときは飛ばします）
+try:
+    from sunpy.net import Fido, attrs as a
+    res = Fido.search(a.Time("2011-07-02 03:00", "2011-07-02 04:30"),
+                      a.Instrument("EIS"))
+    print(res)
+except Exception as e:
+    print("検索できませんでした:", e)
+
+# %% [markdown]
+# ### 1b. データを取る
 #
 # ```python
 # from eispac.download import download_hdf5_data
