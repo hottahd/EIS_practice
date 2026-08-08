@@ -25,11 +25,17 @@
 # %%
 import numpy as np
 import matplotlib.pyplot as plt
+import eispac
 
-from workshop import fit_region
+from workshop import EIS_FILE     # データのパス（解析はすべてこのノートに書いてあります）
 
-Y0, Y1 = 180, 340
-fit, cube = fit_region(wvl=195.119, y0=Y0, y1=Y1, ncpu=2)   # Fe XII 195.119
+Y0, Y1 = 180, 340          # 活動領域が写っている範囲
+
+# 第 2 章と同じ 3 行。違うのは「箱で平均せず、画素ごとに解く」ことだけ
+tmplt = eispac.read_template(
+    eispac.data.get_fit_template_filepath("fe_12_195_119.2c.template.h5"))
+cube = eispac.read_cube(EIS_FILE, tmplt.central_wave)
+fit = eispac.fit_spectra(cube[Y0:Y1, :, :], tmplt, ncpu=2, ignore_warnings=True)
 
 cen = fit.fit["params"][..., 1]        # 中心波長 [Å]
 sig = fit.fit["params"][..., 2]        # 線幅 σ [Å]  ← 第 4 章で使う
@@ -182,7 +188,8 @@ for name, m in [("暗い 20%", inten < q20),
 # 1. **別の輝線でドップラー速度のマップを作る。** 温度が違えば速度も違うはず。
 #    - `Fe XIII 202.044`（1.8 MK、`fe_13_202_044.1c.template.h5`）
 #    - `Si VII 275.368`（0.6 MK、`si_07_275_368.1c.template.h5`、moss が見える）
-#    ヒント: `fit_region(wvl=..., tmplt_name=..., y0=Y0, y1=Y1)`
+#    ヒント: 上と同じ 3 行（`read_template` → `read_cube` → `fit_spectra`）で、
+#    テンプレート名を変えるだけです
 #
 # 2. **ゼロ点の決め方を変える**（`corr_method="image"` と `"column"`）。
 #    マップのどこが変わるか。x 方向の縞が出たり消えたりするはず。
@@ -193,7 +200,9 @@ for name, m in [("暗い 20%", inten < q20),
 # %%
 # 演習 1: ____ を埋めて実行してください（Fe XIII 202.044 のドップラー速度マップ）
 #
-# fit2, cube2 = fit_region(wvl=____, tmplt_name="____", y0=Y0, y1=Y1)
+# tmplt2 = eispac.read_template(eispac.data.get_fit_template_filepath("____"))
+# cube2 = eispac.read_cube(EIS_FILE, tmplt2.central_wave)
+# fit2 = eispac.fit_spectra(cube2[Y0:Y1, :, :], tmplt2, ncpu=2, ignore_warnings=True)
 # cen2 = fit2.fit["params"][..., ____]
 # v2 = calc_velocity(cen2, ____, corr_method="column")
 # plt.imshow(v2, origin="lower", aspect="auto", cmap="RdBu_r", vmin=-15, vmax=15)

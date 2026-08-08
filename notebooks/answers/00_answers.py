@@ -26,7 +26,7 @@ sys.path.insert(0, "scripts")
 
 import numpy as np
 import matplotlib.pyplot as plt
-from workshop import ensure_eis, fit_region, box_intensities
+from workshop import BOX, EIS_FILE, ensure_eis   # 定数と、データを落とす関数
 
 ensure_eis()
 print("作業ディレクトリ:", os.getcwd())
@@ -43,12 +43,19 @@ from eispac.instr import calc_velocity
 Y0, Y1 = 180, 340
 ext = [0, 60, Y0, Y1]
 
-fit, cube = fit_region(wvl=195.119, y0=Y0, y1=Y1, ncpu=2)
+import eispac
+
+tmplt = eispac.read_template(
+    eispac.data.get_fit_template_filepath("fe_12_195_119.2c.template.h5"))
+cube = eispac.read_cube(EIS_FILE, tmplt.central_wave)
+fit = eispac.fit_spectra(cube[Y0:Y1, :, :], tmplt, ncpu=2, ignore_warnings=True)
 v_col = calc_velocity(fit.fit["params"][..., 1], 195.119, corr_method="column")
 
 # %%
-fit2, cube2 = fit_region(wvl=202.044, tmplt_name="fe_13_202_044.1c.template.h5",
-                         y0=Y0, y1=Y1)
+tmplt2 = eispac.read_template(
+    eispac.data.get_fit_template_filepath("fe_13_202_044.1c.template.h5"))
+cube2 = eispac.read_cube(EIS_FILE, tmplt2.central_wave)
+fit2 = eispac.fit_spectra(cube2[Y0:Y1, :, :], tmplt2, ncpu=2, ignore_warnings=True)
 cen2 = fit2.fit["params"][..., 1]
 v2 = calc_velocity(cen2, 202.044, corr_method="column")
 
@@ -155,10 +162,17 @@ def read_gofnt(path):
 
 logT, names, wvl, G = read_gofnt("work/gofnt_chianti901_005.txt")
 iobs = np.zeros(len(names))
-for ion, w, i_fit, i_paper, ratio in box_intensities():
+from lines_warren2012 import LINES, pick_component
+from fit_box_spectra import average_spectrum
+
+for ion, w, tname, i_paper, sig_paper in LINES:
+    wave, inten, sig, _ = average_spectrum(EIS_FILE, w, **BOX)
+    t = eispac.read_template(eispac.data.get_fit_template_filepath(tname))
+    comp, _ = pick_component(t, w)
+    f = eispac.fit_spectra(inten, t, wave=wave, errs=sig, ncpu=1, ignore_warnings=True)
     k = int(np.argmin(np.abs(wvl - w)))
     if abs(wvl[k] - w) < 0.01:
-        iobs[k] = i_fit
+        iobs[k] = float(np.atleast_1d(f.fit["int"][..., comp]).ravel()[0])
 iobs[int(np.argmin(np.abs(wvl - 192.858)))] = 0.0
 
 keep = (logT >= 5.5) & (logT <= 7.1)

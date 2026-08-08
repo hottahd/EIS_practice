@@ -33,11 +33,21 @@
 # %%
 import numpy as np
 import matplotlib.pyplot as plt
+import eispac
 
-from workshop import fit_region
+from workshop import EIS_FILE     # データのパス
 
 Y0, Y1 = 180, 340
-fit, cube = fit_region(wvl=195.119, y0=Y0, y1=Y1, ncpu=2)   # 第 3 章と同じフィット
+
+# 第 3 章と同じフィット結果を使う。
+# 上から順に実行していれば `fit` が残っているので、その場合は解き直さない
+try:
+    fit
+except NameError:
+    tmplt = eispac.read_template(
+        eispac.data.get_fit_template_filepath("fe_12_195_119.2c.template.h5"))
+    cube = eispac.read_cube(EIS_FILE, tmplt.central_wave)
+    fit = eispac.fit_spectra(cube[Y0:Y1, :, :], tmplt, ncpu=2, ignore_warnings=True)
 
 sig_obs = fit.fit["params"][..., 2]      # フィットで得た σ [Å]
 inten = fit.fit["int"][..., 0]

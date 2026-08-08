@@ -19,7 +19,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import eispac
 
-from workshop import EIS_FILE, ensure_eis
+from workshop import EIS_FILE, ensure_eis   # データのパスと、無ければ落とす関数
 
 ensure_eis()
 cube = eispac.read_cube(EIS_FILE, 195.119)      # Fe XII 195.119 Å

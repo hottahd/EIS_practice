@@ -33,7 +33,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import eispac
 
-from workshop import EIS_FILE, ensure_eis
+from workshop import EIS_FILE, ensure_eis   # ensure_eis(): データが無ければ NRL から落とす
 
 ensure_eis()
 path = eispac.data.get_fit_template_filepath("fe_12_195_119.2c.template.h5")
@@ -124,8 +124,30 @@ print("Fe XIII 203.826 は第", pick_component(t, 203.826)[0], "成分")
 # 上部を見ている場所）を使います。
 
 # %%
-from workshop import BOX
-from fit_box_spectra import average_spectrum      # 欠損値は落としてある（付録 A）
+from workshop import BOX      # 採用する箱の座標 dict(y0=244, y1=274, x0=32, x1=40)
+
+
+def average_spectrum(datafile, wvl, y0, y1, x0, x1):
+    """箱 [y0:y1, x0:x1] の中でスペクトルを平均する。
+
+    返り値: (波長, 平均した強度, その誤差, 平均に使った画素数)
+    """
+    c = eispac.read_cube(datafile, wvl)
+    data = c.data[y0:y1, x0:x1, :]
+    errs = c.uncertainty.array[y0:y1, x0:x1, :]
+    wave = c.wavelength[y0:y1, x0:x1, :]
+
+    # 欠損サンプルは平均に入れない（欠損は NaN ではなく大きな負の値。付録 A）
+    good = np.isfinite(data) & ~np.asarray(c.mask[y0:y1, x0:x1, :], dtype=bool)
+    n = good.sum(axis=(0, 1))                       # 波長ごとの有効画素数
+
+    inten = np.nansum(np.where(good, data, 0), axis=(0, 1)) / np.maximum(n, 1)
+    sig = np.sqrt(np.nansum(np.where(good, errs**2, 0), axis=(0, 1))) / np.maximum(n, 1)
+    inten[n == 0], sig[n == 0] = np.nan, np.nan     # 全部欠損なら NaN
+
+    # 波長は画素ごとにわずかに違うので、平均した波長軸を返す
+    return np.nanmean(wave, axis=(0, 1)), inten, sig, int(np.median(n))
+
 
 print("箱:", BOX)
 wave, inten, sig, npix = average_spectrum(EIS_FILE, 195.119, **BOX)
@@ -170,6 +192,40 @@ print(f"比 = {I_fit/1147.35:.2f}   （論文の誤差は ±22%）")
 # 差の主な原因は**測った場所の違い**です。論文は箱の座標を書いていないので、
 # 図から読み取るしかありません。
 #
+
+# %% [markdown]
+# ### どんなテンプレートがあるか調べる
+#
+# 演習で別の輝線をやるときに使います。方法は 2 つ。
+#
+# **(a) この観測に使えるものを出す**（おすすめ）
+#
+# ```python
+# eispac.match_templates(EIS_FILE)   # ウィンドウごとに候補を返す
+# eispac.match_templates(cube)       # その窓の候補だけ
+# ```
+#
+# **(b) 同梱の一覧から探す**
+#
+# ```python
+# eispac.data.fit_template_filenames()   # 119 個ぜんぶ
+# ```
+
+# %%
+matched = eispac.match_templates(EIS_FILE)      # ウィンドウごとの候補
+wi = eispac.read_wininfo(EIS_FILE.replace(".data.h5", ".head.h5"))
+
+print(f"{'ウィンドウ':<22} 使えるテンプレート")
+for w, cands in zip(wi, matched):
+    short = [str(c).split("/")[-1].replace(".template.h5", "") for c in cands]
+    print(f"{str(w['line_id']):<22} {', '.join(short) if short else '(無し)'}")
+
+# %% [markdown]
+# 候補が複数あるのは、**何を主役にするか・どこまで分離するか**が違うためです
+# （`.1c` / `.2c` / `.6c` の違い、隣の輝線を立てるかどうか）。
+# テンプレートそのものの説明は付録 K にあります。
+
+# %% [markdown]
 # ## 2-5. 演習
 #
 # 1. **別の輝線でやってみる。** テンプレート名は `scripts/lines_warren2012.py` の

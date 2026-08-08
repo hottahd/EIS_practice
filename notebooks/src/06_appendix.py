@@ -280,7 +280,7 @@
 # %%
 import eispac
 
-from workshop import EIS_FILE
+from workshop import EIS_FILE       # データのパス
 from astropy.time import Time
 
 c = eispac.read_cube(EIS_FILE, 195.119)
@@ -401,7 +401,7 @@ except Exception as e:
 import eispac
 import numpy as np
 
-from workshop import EIS_FILE
+from workshop import EIS_FILE       # データのパス
 
 wi = eispac.read_wininfo(EIS_FILE.replace(".data.h5", ".head.h5"))
 print(f"{len(wi)} ウィンドウ。最初の 3 つ:")
@@ -641,7 +641,9 @@ print(f"同梱テンプレート {len(names)} 個。Fe XII のもの:")
 for n in sorted(str(x).split("/")[-1] for x in names):
     if n.startswith("fe_12"):
         print("  ", n)
-print("\n観測に合うものを探すには eispac.match_templates(eis_obs)")
+print("\n観測に合うものを探す:")
+print("  eispac.match_templates(データファイルのパス) → ウィンドウごとの候補")
+print("  eispac.match_templates(cube)                → その窓の候補だけ")
 
 # %% [markdown]
 # ### 5. フィットする
@@ -758,8 +760,8 @@ import copy
 import numpy as np
 import eispac
 
-from workshop import BOX, EIS_FILE
-from fit_box_spectra import average_spectrum
+from workshop import BOX, EIS_FILE   # 箱の座標とデータのパス
+# average_spectrum() は第 2 章で定義したもの（箱の中でスペクトルを平均する）
 
 C_KMS, LAM = 2.998e5, 202.044        # Fe XIII 202.044（ブレンドの少ない線）
 wave, inten, sig, _ = average_spectrum(EIS_FILE, LAM, **BOX)

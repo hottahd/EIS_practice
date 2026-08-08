@@ -77,7 +77,7 @@ import eispac
 import sunpy
 import numpy as np
 
-from workshop import ensure_eis
+from workshop import ensure_eis   # NRL から level-1 を落とすだけの関数
 
 print("eispac", eispac.__version__, " sunpy", sunpy.__version__,
       " numpy", np.__version__)

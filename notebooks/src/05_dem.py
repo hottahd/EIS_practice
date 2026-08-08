@@ -26,8 +26,12 @@
 # %%
 import numpy as np
 import matplotlib.pyplot as plt
+import eispac
 
-from workshop import box_intensities
+from workshop import BOX, EIS_FILE   # 箱の座標とデータのパス（定数だけ）
+from lines_warren2012 import LINES    # 論文 Table 2 の 22 輝線とテンプレート名の対応表
+
+# average_spectrum() と pick_component() は第 2 章で定義したものをそのまま使う
 
 
 def read_gofnt(path):
@@ -103,13 +107,17 @@ plt.show()
 # **等温プラズマなら全部の曲線が 1 点で交わります。**
 
 # %%
-rows = box_intensities()        # 第 2 章と同じ箱の 22 輝線（無ければその場で作る）
-
+# 第 2 章でやったことを 22 輝線ぶん繰り返すだけ（10 秒ほど）
 iobs = np.zeros(len(names))
-for ion, w, i_fit, i_paper, ratio in rows:
-    k = int(np.argmin(np.abs(wvl - w)))
+for ion, w, tname, i_paper, sig_paper in LINES:
+    wave, inten, sig, _ = average_spectrum(EIS_FILE, w, **BOX)   # 箱で平均
+    t = eispac.read_template(eispac.data.get_fit_template_filepath(tname))
+    comp, _ = pick_component(t, w)                               # 成分の取り違え防止
+    f = eispac.fit_spectra(inten, t, wave=wave, errs=sig, ncpu=1,
+                           ignore_warnings=True)
+    k = int(np.argmin(np.abs(wvl - w)))                          # G(T) の並びに合わせる
     if abs(wvl[k] - w) < 0.01:
-        iobs[k] = i_fit
+        iobs[k] = float(np.atleast_1d(f.fit["int"][..., comp]).ravel()[0])
 iobs[int(np.argmin(np.abs(wvl - 192.858)))] = 0.0     # Ca XVII はブレンド（付録 G）
 
 ok = np.where(iobs > 0)[0]
