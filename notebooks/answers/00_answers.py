@@ -26,9 +26,11 @@ sys.path.insert(0, "scripts")
 
 import numpy as np
 import matplotlib.pyplot as plt
-from workshop import BOX, EIS_FILE, ensure_eis   # 定数と、データを落とす関数
+from workshop import ensure_eis   # データを落とすだけの関数
 
-ensure_eis()
+EIS_FILE = ensure_eis()
+REGION = dict(y0=244, y1=274, x0=32, x1=40)   # 本編と同じ領域
+
 print("作業ディレクトリ:", os.getcwd())
 
 # %% [markdown]
@@ -166,7 +168,7 @@ from lines_warren2012 import LINES, pick_component
 from fit_box_spectra import average_spectrum
 
 for ion, w, tname, i_paper, sig_paper in LINES:
-    wave, inten, sig, _ = average_spectrum(EIS_FILE, w, **BOX)
+    wave, inten, sig, _ = average_spectrum(EIS_FILE, w, **REGION)
     t = eispac.read_template(eispac.data.get_fit_template_filepath(tname))
     comp, _ = pick_component(t, w)
     f = eispac.fit_spectra(inten, t, wave=wave, errs=sig, ncpu=1, ignore_warnings=True)

@@ -16,7 +16,7 @@
 # %% [markdown]
 # ## 3-1. ラスターをフィットする
 #
-# 第 2 章では箱の中で平均してから 1 回フィットした。
+# 第 2 章では領域の中で平均してから 1 回フィットした。
 # 速度**マップ**がほしいので、今度は**画素ごとにフィット**する。
 #
 # 全部（512×60）だと数分かかるので、活動領域が写っている
@@ -27,11 +27,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import eispac
 
-from workshop import EIS_FILE     # データのパス（解析はすべてこのノートに書いてあります）
-
 Y0, Y1 = 180, 340          # 活動領域が写っている範囲
 
-# 第 2 章と同じ 3 行。違うのは「箱で平均せず、画素ごとに解く」ことだけ
+# 第 2 章と同じ 3 行。違うのは「領域で平均せず、画素ごとに解く」ことだけ
 tmplt = eispac.read_template(
     eispac.data.get_fit_template_filepath("fe_12_195_119.2c.template.h5"))
 cube = eispac.read_cube(EIS_FILE, tmplt.central_wave)

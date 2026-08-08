@@ -35,8 +35,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import eispac
 
-from workshop import EIS_FILE     # データのパス
-
 Y0, Y1 = 180, 340
 
 # 第 3 章と同じフィット結果を使う。

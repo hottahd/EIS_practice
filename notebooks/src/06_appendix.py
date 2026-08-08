@@ -50,7 +50,7 @@
 # 論文 §3 も *"In computing these averaged profiles, missing data are not included"*
 # とわざわざ書いています。
 #
-# **影響の実測**（本編の箱、22 輝線）: median は 0%、大半の線で 1% 未満。
+# **影響の実測**（本編の領域、22 輝線）: median は 0%、大半の線で 1% 未満。
 # ただし弱い線では効きます（Ca XVII +6.9%、Ca XVI −4.6%、Ar XIV +3.2%）。
 # IDL 側では最も明るい Fe XII 195.119 が 24% 小さくなった例もあります。
 #
@@ -60,7 +60,7 @@
 # %% [markdown]
 # ## 付録 B: 誤差の入れ方
 #
-# 箱の中で数百画素を平均すると、**統計誤差は 0.2% 程度**まで落ちます。
+# 領域の中で数百画素を平均すると、**統計誤差は 0.2% 程度**まで落ちます。
 # 一方、論文が使っている誤差は **22%** です。
 #
 # 差は**絶対較正の不確かさ**（系統誤差）で、これは平均しても減りません。
@@ -228,9 +228,9 @@
 # ## 付録 H: 論文 Table 2 との全面照合
 #
 # 22 輝線すべてを論文と比べると、**median 0.89、21 本中 13 本が 15% 以内**
-# （箱 y=[244:274] x=[32:40]）。論文の誤差 ±22% の中に収まります。
+# （領域 y=[244:274] x=[32:40]）。論文の誤差 ±22% の中に収まります。
 #
-# **★ 箱の選び方の診断法**: ratio を**形成温度に対して**並べ、傾きを見ます。
+# **★ 領域の選び方の診断法**: ratio を**形成温度に対して**並べ、傾きを見ます。
 #
 # | 傾き | 意味 |
 # |---|---|
@@ -243,10 +243,10 @@
 #
 # **★ 要約統計 1 つで判断しない**（実測）:
 #
-# | 箱 | median | 傾き | 15% 以内 | ばらつき |
+# | 領域 | median | 傾き | 15% 以内 | ばらつき |
 # |---|---:|---:|---:|---:|
 # | inter-moss（採用） | 0.89 | +0.21 | 13/21 | 0.10 dex |
-# | 論文の箱サイズ | 0.93 | +0.27 | 15/21 | 0.12 dex |
+# | 論文の領域サイズ | 0.93 | +0.27 | 15/21 | 0.12 dex |
 # | **適当に明るいところ** | **0.96** | **−0.34** | **5/21** | **0.26 dex** |
 #
 # 一番下は **median が最も 1 に近いのに、15% 以内は 5 本しかありません**。
@@ -280,7 +280,6 @@
 # %%
 import eispac
 
-from workshop import EIS_FILE       # データのパス
 from astropy.time import Time
 
 c = eispac.read_cube(EIS_FILE, 195.119)
@@ -401,7 +400,6 @@ except Exception as e:
 import eispac
 import numpy as np
 
-from workshop import EIS_FILE       # データのパス
 
 wi = eispac.read_wininfo(EIS_FILE.replace(".data.h5", ".head.h5"))
 print(f"{len(wi)} ウィンドウ。最初の 3 つ:")
@@ -760,11 +758,10 @@ import copy
 import numpy as np
 import eispac
 
-from workshop import BOX, EIS_FILE   # 箱の座標とデータのパス
-# average_spectrum() は第 2 章で定義したもの（箱の中でスペクトルを平均する）
+# EIS_FILE / REGION / average_spectrum() は本編（第 1・2 章）で定義したものを使います
 
 C_KMS, LAM = 2.998e5, 202.044        # Fe XIII 202.044（ブレンドの少ない線）
-wave, inten, sig, _ = average_spectrum(EIS_FILE, LAM, **BOX)
+wave, inten, sig, _ = average_spectrum(EIS_FILE, LAM, **REGION)
 
 base = eispac.read_template(
     eispac.data.get_fit_template_filepath("fe_13_202_044.1c.template.h5"))
@@ -805,7 +802,7 @@ print(f"   副 : {C_KMS*(p2[4]-LAM)/LAM:+7.1f} km/s  振幅 {p2[3]:8.0f}"
 # 端に張り付き、χ² もむしろ悪化します（自由度が増えても、mpfit が
 # 初期値に引きずられて局所解に落ちるため）。
 #
-# **それが正しい答えです。** 箱の中で平均した対称なプロファイルには、
+# **それが正しい答えです。** 領域の中で平均した対称なプロファイルには、
 # 分離すべき第 2 の速度成分が無いのですから。
 #
 # 逆に言えば、**2 成分にすれば必ず良くなるわけではありません**。

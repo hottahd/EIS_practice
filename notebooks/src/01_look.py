@@ -19,9 +19,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import eispac
 
-from workshop import EIS_FILE, ensure_eis   # データのパスと、無ければ落とす関数
+from workshop import ensure_eis   # データを落とすだけの関数（既にあれば何もしない）
 
-ensure_eis()
+EIS_FILE = ensure_eis()
 cube = eispac.read_cube(EIS_FILE, 195.119)      # Fe XII 195.119 Å
 print("shape (y, x, wavelength) =", cube.data.shape)
 print("単位 =", cube.unit)

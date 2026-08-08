@@ -77,12 +77,14 @@ import eispac
 import sunpy
 import numpy as np
 
-from workshop import ensure_eis   # NRL から level-1 を落とすだけの関数
+from workshop import ensure_eis   # NRL からデータを落とすだけの関数
 
 print("eispac", eispac.__version__, " sunpy", sunpy.__version__,
       " numpy", np.__version__)
-ensure_eis()          # EIS の level-1 データ（94 MB）。既にあれば何もしない
-print("準備完了")
+
+# 今日使うデータ（2011-07-02 03:07 UT, NOAA 1243）。落として、そのパスを受け取る
+EIS_FILE = ensure_eis()
+print("データ:", EIS_FILE)
 
 # %% [markdown]
 # **★ Colab の保存について**

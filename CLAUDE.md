@@ -112,19 +112,19 @@ Colab 専用セル（`!pip` などを含むもの）は自動で飛ばし、番�
 | スクリプト | 役割 |
 |---|---|
 | `lines_warren2012.py` | 論文 Table 2 の 22 輝線 + eispac テンプレート対応表。成分の自動判定 `pick_component()` |
-| `quicklook_raster.py` | フィット無しのラスタークイックルック（数秒）。箱選び用 |
-| `fit_box_spectra.py` | 箱内平均 → 22 輝線フィット（8 秒） |
+| `quicklook_raster.py` | フィット無しのラスタークイックルック（数秒）。領域選び用 |
+| `fit_box_spectra.py` | 領域内平均 → 22 輝線フィット（8 秒） |
 | `download_sdo.py` | AIA 94/171/193 + HMI を VSO から取得（登録不要・リトライ付き） |
 | `aia_fe18.py` | AIA 94 → Fe XVIII 分離（論文 Appendix。**誤植を修正済み**） |
 | `make_fe18_map.py` | 論文 Figure 1–3 相当の 5 枚並び図 |
 | `coalign_eis_aia.py` | EIS↔AIA 相互相関で座標合わせ、AIA を EIS 格子へ |
-| `select_intermoss.py` | inter-moss 箱の候補を機械的に洗い出す |
-| `compare_table2.py` | 論文 Table 2 と数値照合。「箱の選び方」を傾きで診断 |
-| `scan_boxes.py` | 箱を総当たりして論文に最も合う場所を探す（集計スコア） |
+| `select_intermoss.py` | inter-moss 領域の候補を機械的に洗い出す |
+| `compare_table2.py` | 論文 Table 2 と数値照合。「領域の選び方」を傾きで診断 |
+| `scan_boxes.py` | 領域を総当たりして論文に最も合う場所を探す（集計スコア） |
 | `scan_perline.py` | 同上、ただし**輝線ごとの ratio を全記録**（上位だけ見ると誤る） |
-| `scan_ratios.py` | 窓積分の比だけで高速に候補箱を探す |
+| `scan_ratios.py` | 窓積分の比だけで高速に候補領域を探す |
 | `fit_perpixel_box.py` | 「平均→fit」と「fit→平均」を比較（論文 §3 は前者） |
-| `extract_paper_boxes.py` | **論文 Figure 1-3 の緑枠から 15 領域の箱の座標を実測** |
+| `extract_paper_boxes.py` | **論文 Figure 1-3 の緑枠から 15 領域の領域の座標を実測** |
 | `fetch_pintofale.sh` | PINTofALE 一式を取得（公式は「廃止」と書いているが生きている） |
 
 ### IDL / SolarSoft 側（`scripts/idl/`）
@@ -136,7 +136,7 @@ Colab 専用セル（`!pip` などを含むもの）は自動で飛ばし、番�
 | `02_explore_windata.pro` | windata の構造と座標系を調べる（eispac との対応確認） |
 | `03/04_fit_box*.pro` | 22 輝線フィット（04 は線幅共有＋欠損マスク修正版） |
 | `05b_ca17_ratios.pro` | Ca XVII 分離用の原子データ比を CHIANTI から取得 |
-| `06_dump_spectra.pro` | 箱内平均スペクトルを書き出す（Python と突き合わせる用） |
+| `06_dump_spectra.pro` | 領域内平均スペクトルを書き出す（Python と突き合わせる用） |
 | `08_fit_ca.pro` | **Ca 線を論文 p.6 の拘束どおりに解く**（Ko+2009 の Ca XVII 分離込み） |
 | `09_gofnt.pro` | CHIANTI 9.0.1 で 22 輝線の G(T)（Feldman 1992 + chianti.ioneq） |
 | `10_poa_check.pro` | PINTofALE が IDL 9.2 でコンパイルできるか確認（29/29 成功） |
@@ -146,7 +146,7 @@ Colab 専用セル（`!pip` などを含むもの）は自動で飛ばし、番�
 ## 到達済みの成果（2026-08-06）
 
 ### Python (eispac) 側
-**論文 Table 2 を再現できた。** 箱 y=[244:274], x=[32:40] で
+**論文 Table 2 を再現できた。** 領域 y=[244:274], x=[32:40] で
 21 輝線中 13 本が論文の 15% 以内、median ratio 0.89、ばらつき 0.10 dex。
 
 ### IDL / SolarSoft 側（同日、環境が見つかったので実施）
@@ -161,19 +161,19 @@ Colab 専用セル（`!pip` などを含むもの）は自動で飛ばし、番�
    EM 分布のピークは logT=6.60 = **4.0 MK**（論文アブストラクトと一致）。
    → **絶対強度が 11% 低くても DEM 解析の結論は論文と同じ。**
 3. **Ca XVII のブレンド分離ができた**（Ko et al. 2009 相当）。4.99 → 0.767。
-4. **論文が書いていない inter-moss 箱の座標を Figure 1-3 から復元**（15 領域ぶん）。
+4. **論文が書いていない inter-moss 領域の座標を Figure 1-3 から復元**（15 領域ぶん）。
 
 ### 準備の過程での重要な発見
 1. **論文 Eq.(A1) の指数は誤植**。正しくは定数項つき 3 次式（実データで確定）
 2. **eispac に Ca XVII 192.858 のブレンド分離テンプレートが無い**
    （SSW 側で正解値を作ったので、自作テンプレートの検証はできる）
 3. **Si VII 275.368 が論文の 0.39 倍なのは未解決。** ただし範囲は絞れた。
-   - 容疑を 10 個潰した（フィッター実装 / eispac 固有 / 箱の位置 /
+   - 容疑を 10 個潰した（フィッター実装 / eispac 固有 / 領域の位置 /
      打ち上げ後較正 2 種 / 実効面積のバージョン / despike / 欠損値処理 /
-     フィットの順番 / 未モデル化のブレンド / 「箱で説明できる」説）
-   - **決め手は AIA Fe XVIII**。Si VII が合う箱は AIA Fe XVIII が
+     フィットの順番 / 未モデル化のブレンド / 「領域で説明できる」説）
+   - **決め手は AIA Fe XVIII**。Si VII が合う領域は AIA Fe XVIII が
      論文の 0.161 倍（6 分の 1）で、論文 Table 2 の AIA 行と整合しない。
-     逆に AIA が合う箱では Si VII が必ず 2.6 倍低い。
+     逆に AIA が合う領域では Si VII が必ず 2.6 倍低い。
    - → **論文 Table 2 の Si VII 値は、同じ Table 2 の AIA Fe XVIII 値と
      整合しない**という形まで絞れた。著者に問い合わせる価値がある。
    - Fe XIII が DEM から 1.3-2.8 倍ずれるのは **論文側でも同じ**
@@ -191,7 +191,7 @@ Colab 専用セル（`!pip` などを含むもの）は自動で飛ばし、番�
      エラーは出ず、平均が静かに下がるだけ。クイックルック図に
      **横方向の黒い縞**が出たらこれを疑う。
      （2026-08-06 に `fit_box_spectra.py` / `quicklook_raster.py` を修正。
-       採用箱では median 0%、弱い線だけ数 % 動いた）
+       採用領域では median 0%、弱い線だけ数 % 動いた）
 
 詳細は `docs/00_log.md`。
 
@@ -295,12 +295,12 @@ Python (eispac) だけでは解決できず、SSW が要る項目。
 - **AIA 94 Å の Fe XVIII 専用応答関数**を作った（論文 p.6 が要求するもの）。
   `scripts/idl/15_aia94_fe18_resp.pro` + `scripts/aia94_fe18_response.py`。
   R(T) ピーク 2.73e-27 DN cm^5 s^-1 pix^-1 at logT 6.90。
-- **論文が書いていない inter-moss 箱の座標を Figure 1-3 から復元**（15 領域ぶん）。
-  `scripts/extract_paper_boxes.py`。region 13 だけ箱が 2 つ出るなど、
+- **論文が書いていない inter-moss 領域の座標を Figure 1-3 から復元**（15 領域ぶん）。
+  `scripts/extract_paper_boxes.py`。region 13 だけ領域が 2 つ出るなど、
   論文の記述と一致することで正しさを確認済み。
-- **AIA Fe XVIII で箱を独立に検証**（`scripts/check_fe18_box.py`）。
+- **AIA Fe XVIII で領域を独立に検証**（`scripts/check_fe18_box.py`）。
   JSOC の synoptic アーカイブ（登録不要、1 枚 1 MB）を使う。
-  → EIS 0.89 と AIA 0.93 が揃って低い = 装置でも処理でもなく箱の位置の差。
+  → EIS 0.89 と AIA 0.93 が揃って低い = 装置でも処理でもなく領域の位置の差。
 
 ## 環境（2026-08-06 時点で確認済み）
 

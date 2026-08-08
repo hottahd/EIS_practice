@@ -33,9 +33,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import eispac
 
-from workshop import EIS_FILE, ensure_eis   # ensure_eis(): データが無ければ NRL から落とす
+from workshop import ensure_eis   # データを落とすだけの関数
 
-ensure_eis()
+EIS_FILE = ensure_eis()
 path = eispac.data.get_fit_template_filepath("fe_12_195_119.2c.template.h5")
 tmplt = eispac.read_template(path)
 
@@ -124,11 +124,12 @@ print("Fe XIII 203.826 は第", pick_component(t, 203.826)[0], "成分")
 # 上部を見ている場所）を使います。
 
 # %%
-from workshop import BOX      # 採用する箱の座標 dict(y0=244, y1=274, x0=32, x1=40)
+# 解析する領域（画素で指定）。活動領域コアの inter-moss にあたる場所
+REGION = dict(y0=244, y1=274, x0=32, x1=40)
 
 
 def average_spectrum(datafile, wvl, y0, y1, x0, x1):
-    """箱 [y0:y1, x0:x1] の中でスペクトルを平均する。
+    """領域 [y0:y1, x0:x1] の中でスペクトルを平均する。
 
     返り値: (波長, 平均した強度, その誤差, 平均に使った画素数)
     """
@@ -149,8 +150,8 @@ def average_spectrum(datafile, wvl, y0, y1, x0, x1):
     return np.nanmean(wave, axis=(0, 1)), inten, sig, int(np.median(n))
 
 
-print("箱:", BOX)
-wave, inten, sig, npix = average_spectrum(EIS_FILE, 195.119, **BOX)
+print("領域:", REGION)
+wave, inten, sig, npix = average_spectrum(EIS_FILE, 195.119, **REGION)
 print(f"平均に使った画素数: {npix}")
 
 fit1 = eispac.fit_spectra(inten, tmplt, wave=wave, errs=sig, ncpu=1,
@@ -189,7 +190,7 @@ print(f"比 = {I_fit/1147.35:.2f}   （論文の誤差は ±22%）")
 # %% [markdown]
 # **論文の値と 1 割の一致。** 独立に処理した結果が合うのは気持ちがよいところです。
 #
-# 差の主な原因は**測った場所の違い**です。論文は箱の座標を書いていないので、
+# 差の主な原因は**測った場所の違い**です。論文は領域の座標を書いていないので、
 # 図から読み取るしかありません。
 #
 
@@ -233,7 +234,7 @@ for w, cands in zip(wi, matched):
 #    - `Fe XIII 202.044` → 論文 1076.80
 #    - `Fe XV 284.160` → 論文 5931.55
 #    - `Ca XV 200.972` → 論文 127.92
-# 2. **箱を動かす。** `BOX` の y や x をずらすと強度はどれくらい変わるか。
+# 2. **領域を動かす。** `REGION` の y や x をずらすと強度はどれくらい変わるか。
 # 3. `Ca XVII 192.858` をやると論文の 5 倍になります。なぜか考えてみてください
 #    （ヒント: 第 1 章の Ca XVII のマップは Fe XII に似ていた。答えは付録 G）
 
@@ -245,7 +246,7 @@ for w, cands in zip(wi, matched):
 #     print(f"{ion:8s} {wvl:8.3f}  {tname}")
 #
 # tmplt2 = eispac.read_template(eispac.data.get_fit_template_filepath("____"))
-# wave2, inten2, sig2, _ = average_spectrum(EIS_FILE, ____, **BOX)
+# wave2, inten2, sig2, _ = average_spectrum(EIS_FILE, ____, **REGION)
 # fit2 = eispac.fit_spectra(inten2, tmplt2, wave=wave2, errs=sig2, ncpu=1,
 #                           ignore_warnings=True)
 # comp2, ids2 = pick_component(tmplt2, ____)
