@@ -224,13 +224,29 @@ for w, cands in zip(wi, matched):
 # テンプレートそのものの説明は付録 K にあります。
 
 # %% [markdown]
+# ### 論文 Table 2 の 22 輝線
+#
+# 論文が使った輝線と、対応する eispac のテンプレート、そして**論文が測った値**の対応表です。
+# リポジトリの `scripts/lines_warren2012.py` に書いてあります
+# （強度の単位は erg cm⁻² s⁻¹ sr⁻¹）。
+
+# %%
+from lines_warren2012 import LINES     # (イオン, 波長, テンプレート, 論文の値, その誤差)
+
+print(f"{'イオン':<9}{'波長 [Å]':>10}  {'テンプレート':<24}{'論文の値':>10}{'±':>9}")
+for ion, wvl, tname, i_paper, sig_paper in LINES:
+    print(f"{ion:<9}{wvl:10.3f}  {tname.replace('.template.h5',''):<24}"
+          f"{i_paper:10.2f}{sig_paper:9.2f}")
+print(f"\n{len(LINES)} 本。ほかに AIA 94 Å の Fe XVIII（7.20 ± 1.40 DN/s）が Table 2 にあります")
+
+# %% [markdown]
+# **★ Ca XVII 192.858 だけは注意**（演習 3）。
+# ここに書いてあるテンプレートはブレンドを分離しないので、論文の 5 倍が出ます。
+
+# %% [markdown]
 # ## 2-5. 演習
 #
-# 1. **別の輝線でやってみる。** テンプレート名は `scripts/lines_warren2012.py` の
-#    一覧にあります。論文 Table 2 の値と比べてみましょう。
-#    - `Fe XIII 202.044` → 論文 1076.80
-#    - `Fe XV 284.160` → 論文 5931.55
-#    - `Ca XV 200.972` → 論文 127.92
+# 1. **別の輝線でやってみる。** 下の表から選んで、論文 Table 2 の値と比べましょう。
 # 2. **領域を動かす。** `REGION` の y や x をずらすと強度はどれくらい変わるか。
 # 3. `Ca XVII 192.858` をやると論文の 5 倍になります。なぜか考えてみてください
 #    （ヒント: 第 1 章の Ca XVII のマップは Fe XII に似ていた。答えは付録 G）

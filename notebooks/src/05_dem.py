@@ -28,7 +28,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import eispac
 
-from lines_warren2012 import LINES    # 論文 Table 2 の 22 輝線とテンプレート名の対応表
+from lines_warren2012 import LINES    # 第 2 章で表示した 22 輝線の対応表
 
 # average_spectrum() と pick_component() は第 2 章で定義したものをそのまま使う
 
