@@ -383,7 +383,9 @@ except Exception as e:
 # | `overwrite` | `False` | 既にあっても取り直す |
 # | `max_conn` | `2` | 同時接続数 |
 #
-# **ユーザ登録は不要**です。この教材では `workshop.ensure_eis()` が同じことをしています。
+# **ユーザ登録は不要**です。この教材の「準備」では、
+# `urllib.request.urlretrieve` で同じ URL を直接叩いています
+# （`download_hdf5_data` を使ってもよく、そちらは複数ファイルやリトライを面倒みてくれます）。
 
 # %% [markdown]
 # ### 2. 何が入っているか見る

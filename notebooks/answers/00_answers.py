@@ -15,6 +15,7 @@
 import os
 import subprocess
 import sys
+import urllib.request
 
 REPO = "https://github.com/hottahd/EIS_practice.git"
 if not os.path.exists("scripts/lines_warren2012.py"):
@@ -26,10 +27,16 @@ sys.path.insert(0, "scripts")
 
 import numpy as np
 import matplotlib.pyplot as plt
-from workshop import ensure_eis   # データを落とすだけの関数
-
-EIS_FILE = ensure_eis()
+# データを取る（本編と同じ。既にあれば何もしない）
+BASE = "https://eis.nrl.navy.mil/level1/hdf5/2011/07/02"
+EIS_FILE = "data/eis/eis_20110702_030712.data.h5"
 REGION = dict(y0=244, y1=274, x0=32, x1=40)   # 本編と同じ領域
+
+os.makedirs("data/eis", exist_ok=True)
+for ext in ("data", "head"):
+    name = f"eis_20110702_030712.{ext}.h5"
+    if not os.path.exists(f"data/eis/{name}"):
+        urllib.request.urlretrieve(f"{BASE}/{name}", f"data/eis/{name}")
 
 print("作業ディレクトリ:", os.getcwd())
 

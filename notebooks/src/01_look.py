@@ -19,9 +19,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import eispac
 
-from workshop import ensure_eis   # データを落とすだけの関数（既にあれば何もしない）
-
-EIS_FILE = ensure_eis()
+# EIS_FILE は「準備」で定義済み（data/eis/eis_20110702_030712.data.h5）
 cube = eispac.read_cube(EIS_FILE, 195.119)      # Fe XII 195.119 Å
 print("shape (y, x, wavelength) =", cube.data.shape)
 print("単位 =", cube.unit)

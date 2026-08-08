@@ -33,9 +33,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import eispac
 
-from workshop import ensure_eis   # データを落とすだけの関数
-
-EIS_FILE = ensure_eis()
 path = eispac.data.get_fit_template_filepath("fe_12_195_119.2c.template.h5")
 tmplt = eispac.read_template(path)
 

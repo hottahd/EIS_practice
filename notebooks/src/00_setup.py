@@ -72,19 +72,45 @@ if not os.path.exists("scripts/lines_warren2012.py"):      # リポジトリの�
 sys.path.insert(0, "scripts")
 print("作業ディレクトリ:", os.getcwd())
 
+# %% [markdown]
+# ### 観測データを取る
+#
+# **NRL のアーカイブ**から level-1 の HDF5 を直接落とします。**ユーザ登録は不要**です。
+# URL は日付でできています:
+#
+#     https://eis.nrl.navy.mil/level1/hdf5/YYYY/MM/DD/eis_YYYYMMDD_HHMMSS.{data,head}.h5
+#
+# - `.data.h5` (94 MB) … スペクトルの中身
+# - `.head.h5` (421 KB) … ヘッダ（波長軸、ポインティング、露出時間など）
+#
+# **level-1 とは**: CCD の生データ（level-0）に対して、ペデスタルと暗電流を引き、
+# 不良画素と宇宙線を除き、実効面積で割って物理単位にしたものです。
+
 # %%
 import eispac
 import sunpy
 import numpy as np
 
-from workshop import ensure_eis   # NRL からデータを落とすだけの関数
-
 print("eispac", eispac.__version__, " sunpy", sunpy.__version__,
       " numpy", np.__version__)
 
-# 今日使うデータ（2011-07-02 03:07 UT, NOAA 1243）。落として、そのパスを受け取る
-EIS_FILE = ensure_eis()
-print("データ:", EIS_FILE)
+import os
+import urllib.request
+
+BASE = "https://eis.nrl.navy.mil/level1/hdf5/2011/07/02"
+EIS_FILE = "data/eis/eis_20110702_030712.data.h5"      # 今日使うデータ
+
+os.makedirs("data/eis", exist_ok=True)
+for ext in ("data", "head"):
+    name = f"eis_20110702_030712.{ext}.h5"
+    path = f"data/eis/{name}"
+    if os.path.exists(path) and os.path.getsize(path) > 0:
+        print("既にある:", path)
+    else:
+        print("取得中  :", name, "...")
+        urllib.request.urlretrieve(f"{BASE}/{name}", path)
+
+print("\n準備完了:", EIS_FILE)
 
 # %% [markdown]
 # **★ Colab の保存について**
