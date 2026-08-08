@@ -37,9 +37,15 @@
 # eispac は `cube.mask`（True = 使ってはいけない）を立ててくれるので、これで落とします:
 #
 # ```python
+# # mask が True のサンプルを NaN に置き換える（np.where(条件, True のとき, False のとき)）
 # d = np.where(np.asarray(cube.mask, dtype=bool), np.nan, cube.data)
-# img = np.nanmean(d, axis=2) * d.shape[2]
+# img = np.nanmean(d, axis=2) * d.shape[2]   # NaN は nanmean が無視する
 # ```
+#
+# **NaN に直してから `nanmean` に渡す**のがポイントです。
+# 欠損は大きな負の値なので、置き換えないと「正常な値」として平均に入ります。
+# なお `cube.data[mask] = np.nan` と書くと**元のデータを書き換えてしまう**ので、
+# 新しい配列を返す `np.where` を使っています。
 #
 # 論文 §3 も *"In computing these averaged profiles, missing data are not included"*
 # とわざわざ書いています。

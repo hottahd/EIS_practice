@@ -79,7 +79,9 @@ def raster_image(datafile, wvl):
     （そうして初めて erg cm^-2 s^-1 sr^-1 になる）。
     """
     c = eispac.read_cube(datafile, wvl)
-    # 欠損サンプルは足さない（理由は付録 A）
+    # 欠損サンプル（c.mask が True）を NaN に置き換える。
+    # こうしておくと下の np.nanmean が無視してくれる。
+    # 元データでは欠損は「大きな負の値」なので、そのままだと平均に入ってしまう（付録 A）
     d = np.where(np.asarray(c.mask, dtype=bool), np.nan, c.data)
     total = np.nanmean(d, axis=2) * d.shape[2]      # 欠損を除いた平均 × サンプル数
     dwave = float(np.median(np.diff(np.asarray(c.wavelength, float), axis=2)))
