@@ -43,13 +43,37 @@ print("ファイル :", os.path.basename(path))
 print("line_ids :", tmplt.template["line_ids"])
 print("ガウシアンの本数 :", tmplt.template["n_gauss"])
 print()
-print(f"{'#':>2} {'初期値':>12} {'下限〜上限':>24} {'tied（他に縛る）':>18}")
-for i, p in enumerate(tmplt.parinfo):
-    lim = f"{p['limits'][0]:.3f} 〜 {p['limits'][1]:.3f}" if p["limited"].any() else "—"
-    print(f"{i:2d} {p['value']:12.4f} {lim:>24} {str(p['tied']):>18}")
+
+# パラメータの並びは [振幅, 中心, 幅] × 成分数 + 背景。行に名前を付けて表示する
+n_gauss = int(tmplt.template["n_gauss"])
+labels = []
+for k in range(n_gauss):
+    labels += [f"成分{k+1} 振幅", f"成分{k+1} 中心 [Å]", f"成分{k+1} 幅 σ [Å]"]
+labels += [f"背景 {j} 次の係数" for j in range(len(tmplt.parinfo) - 3 * n_gauss)]
+
+print(f"{'#':>2}  {'パラメータ':<16}{'初期値':>12}   {'動かせる範囲':<22}{'他に縛る (tied)'}")
+for i, (par, name) in enumerate(zip(tmplt.parinfo, labels)):
+    lo, hi = par["limits"]
+    has_lo, has_hi = par["limited"]
+    if has_lo and has_hi:
+        rng = f"{lo:.3f} 〜 {hi:.3f}"
+    elif has_lo:
+        rng = f"{lo:.3f} 以上"
+    elif has_hi:
+        rng = f"{hi:.3f} 以下"
+    else:
+        rng = "制限なし"
+    print(f"{i:2d}  {name:<16}{par['value']:12.4f}   {rng:<22}{str(par['tied']).strip()}")
 
 # %% [markdown]
-# パラメータは **[振幅, 中心, 幅] × ガウシアンの本数 + 背景**。
+# **この表がテンプレートの中身です。** 行が 1 つのパラメータに対応します。
+#
+# - **初期値** … フィットの出発点。この値から動かして最適解を探します
+# - **動かせる範囲** … ここから出ないように縛る（振幅は 0 以上、中心は ±0.04 Å など）
+# - **tied** … **他のパラメータに縛る式**。`p[1]+0.06` は
+#   「第 1 成分の中心から 0.06 Å 離れた位置に固定」、`p[2]` は「幅を第 1 成分と同じにする」
+#
+# パラメータの並びは **[振幅, 中心, 幅] × ガウシアンの本数 + 背景**で、
 # `2c` は 2 成分なので 3×2 + 1 = 7 個です。
 #
 # Fe XII 195.119 に 2 成分あるのは、195.179 Å に弱い Fe XII があるためです
